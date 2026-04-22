@@ -208,7 +208,6 @@
     function showConfirm(msg, onOk, title="Confirmación"){ const m=document.getElementById('customConfirmModal'); document.getElementById('confirmTitle').innerText=title; document.getElementById('confirmMessage').innerText=msg; m.classList.remove('hidden'); m.classList.add('flex'); const ok=document.getElementById('confirmOkBtn'), cancel=document.getElementById('confirmCancelBtn'); const newOk=ok.cloneNode(true), newCancel=cancel.cloneNode(true); ok.parentNode.replaceChild(newOk,ok); cancel.parentNode.replaceChild(newCancel,cancel); newCancel.onclick=()=>{m.classList.add('hidden'); m.classList.remove('flex');}; newOk.onclick=()=>{m.classList.add('hidden'); m.classList.remove('flex'); onOk();}; }
     function escapeHtml(s){ return s? s.replace(/[&<>]/g, m=> m==='&'?'&amp;': m==='<'?'&lt;': '&gt;'):''; }
     const allGrades = ["PRIMERO DE PRIMARIA","SEGUNDO DE PRIMARIA","TERCERO DE PRIMARIA","CUARTO DE PRIMARIA","QUINTO DE PRIMARIA","SEXTO DE PRIMARIA","PRIMERO DE SECUNDARIA","SEGUNDO DE SECUNDARIA","TERCERO DE SECUNDARIA","CUARTO DE SECUNDARIA","QUINTO DE SECUNDARIA"];
-    // ÁREAS ACTUALIZADAS CON EPT
     const allAreas = ["Matemáticas","Comunicación","Ciencias Sociales","Ciencia y Tecnología","Personal Social","Inglés","Arte y Cultura","Educación Física","Computación","Educación Religiosa","Tutoría","EPT"];
     function populateSelects(){ 
         ["filterTasksGrade","filterExamsGrade","filterSubsGrade","filterDirectoryGrade","filterGradesGrade"].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML='<option value="">-- Todos los grados --</option>'+allGrades.map(g=>`<option value="${g}">${g}</option>`).join(''); });
@@ -236,89 +235,200 @@
     function renderStudents(){ const grade=document.getElementById("filterDirectoryGrade").value; const c=document.getElementById("allStudentsList"); if(!grade){c.innerHTML='<div class="col-span-full text-center py-8">Selecciona un grado.</div>'; return;} const filtered=allStudentsData.filter(s=>s.grade===grade); if(!filtered.length){c.innerHTML=`<div class="col-span-full text-center py-8">No hay estudiantes en ${grade}.</div>`; return;} c.innerHTML=filtered.map(s=>`<div class="bg-white dark:bg-gray-800 p-3 rounded shadow"><div class="font-bold">${escapeHtml(s.name)}</div><div>${s.grade}</div><div>📞 ${s.phones.join(", ")}</div><button class="delete-student mt-2 bg-red-500 text-white px-2 py-1 rounded text-sm" data-id="${s.id}">Remover</button></div>`).join(''); document.querySelectorAll('.delete-student').forEach(btn=>btn.onclick=()=>showConfirm("¿Remover estudiante?",async()=>{await deleteDoc(doc(dbRefs.students,btn.dataset.id)); showToast("Removido","success");})); }
     async function viewStudentExam(resultId, studentName, examId){ const resultDoc=await getDoc(doc(dbRefs.examResults,resultId)); if(!resultDoc.exists()) return showToast("Resultado no encontrado","error"); const result=resultDoc.data(); const answers=result.answers||[]; const examDoc=await getDoc(doc(dbRefs.exams,examId)); if(!examDoc.exists()) return showToast("Examen no encontrado","error"); const exam=examDoc.data(); const modal=document.getElementById("viewStudentExamModal"); document.getElementById("viewStudentExamTitle").innerText=`${exam.title} - ${studentName}`; let html=`<div class="mb-4 p-3 bg-gray-100 dark:bg-gray-700 rounded">Calificación: ${result.grade} (${result.score}/${result.total})</div>`; exam.questions.forEach((q,idx)=>{ const userAns=answers[idx]!==undefined?answers[idx]:-1; const userText=userAns===-1?"No respondió":q.options[userAns]; const isCorrect=userAns===q.correct; html+=`<div class="border p-4 rounded mb-4"><p class="font-bold">${idx+1}. ${escapeHtml(q.text)}</p><div class="pl-4">${q.options.map((opt,i)=>{ let mark=""; if(i===q.correct) mark=" ✅ (Correcta)"; if(userAns===i&&i!==q.correct) mark=" ❌ (Tu respuesta)"; if(userAns===i&&i===q.correct) mark=" ✅ (Tu respuesta correcta)"; return `<div class="${userAns===i?'font-bold text-blue-600':''}">${String.fromCharCode(65+i)}. ${escapeHtml(opt)}${mark}</div>`; }).join('')}</div>${!isCorrect&&userAns!==-1?`<div class="mt-2 text-red-600">Respuesta correcta: ${q.options[q.correct]}</div>`:''}</div>`; }); document.getElementById("viewStudentExamContent").innerHTML=html; modal.classList.remove("hidden"); modal.classList.add("flex"); }
     
-    // ========== FUNCIÓN CORREGIDA: REPORTE PDF CON RETROALIMENTACIÓN ==========
+    // ========== FUNCIÓN CORREGIDA: REPORTE PDF ==========
     async function downloadStudentReport(resultId, studentName, examId) {
-        const resultDoc = await getDoc(doc(dbRefs.examResults, resultId));
-        if (!resultDoc.exists()) return showToast("Resultado no encontrado", "error");
-        const result = resultDoc.data();
-        const answers = result.answers || [];
-        const examDoc = await getDoc(doc(dbRefs.exams, examId));
-        if (!examDoc.exists()) return showToast("Examen no encontrado", "error");
-        const exam = examDoc.data();
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        // Encabezado
-        doc.setFontSize(22);
-        doc.setTextColor(59, 130, 246);
-        doc.text(`Reporte de Evaluación: ${exam.title}`, 20, 20);
-        
-        doc.setFontSize(12);
-        doc.setTextColor(80, 80, 80);
-        doc.text(`Estudiante: ${studentName}`, 20, 32);
-        doc.text(`Calificación: ${result.grade} (${result.score}/${result.total})`, 20, 38);
-        doc.text(`Fecha: ${new Date().toLocaleString()}`, 20, 44);
-        doc.text(`Recomendación: ${result.grade === 'AD' ? 'Excelente, sigue así!' : result.grade === 'A' ? 'Muy bien, repasa los temas que fallaste.' : result.grade === 'B' ? 'Puedes mejorar, estudia más.' : 'Debes repasar los temas y volver a intentar.'}`, 20, 50);
-        
-        doc.setLineWidth(0.5);
-        doc.setDrawColor(200, 200, 200);
-        doc.line(20, 56, 190, 56);
-        
-        doc.setFontSize(14);
-        doc.setTextColor(30, 30, 30);
-        doc.text("Retroalimentación Detallada:", 20, 66);
-        
-        let yPos = 76;
-        doc.setFontSize(10);
-        
-        for (let idx = 0; idx < exam.questions.length; idx++) {
-            if (yPos > 270) { doc.addPage(); yPos = 20; }
+        try {
+            showToast("Generando reporte...", "info");
             
-            const q = exam.questions[idx];
-            const userAnswerIndex = answers[idx] !== undefined ? answers[idx] : -1;
-            const userAnswerText = userAnswerIndex === -1 ? "No respondió" : q.options[userAnswerIndex];
-            const correctAnswer = q.options[q.correct];
-            const isCorrect = (userAnswerIndex === q.correct);
+            let resultData = null;
+            let answers = [];
             
-            // Pregunta
-            doc.setTextColor(0, 0, 0);
-            doc.setFont("helvetica", "bold");
-            const splitQ = doc.splitTextToSize(`${idx + 1}. ${q.text}`, 170);
-            doc.text(splitQ, 20, yPos);
-            yPos += (splitQ.length * 5) + 2;
-            
-            // Respuesta del estudiante
-            doc.setFont("helvetica", "normal");
-            if (isCorrect) {
-                doc.setTextColor(16, 185, 129);
-                doc.text(`✓ Tu respuesta: ${userAnswerText} (Correcta)`, 25, yPos);
-            } else {
-                doc.setTextColor(239, 68, 68);
-                doc.text(`✗ Tu respuesta: ${userAnswerText} (Incorrecta)`, 25, yPos);
+            // Si tenemos resultId, obtenemos el resultado directamente
+            if (resultId) {
+                const resultDoc = await getDoc(doc(dbRefs.examResults, resultId));
+                if (resultDoc.exists()) {
+                    resultData = resultDoc.data();
+                    answers = resultData.answers || [];
+                }
             }
-            yPos += 5;
             
-            // Respuesta correcta
+            // Si no tenemos resultId pero tenemos examId y currentStudent (caso estudiante)
+            if (!resultData && currentStudent && examId) {
+                const q = query(dbRefs.examResults, where("studentId", "==", currentStudent.id), where("examId", "==", examId));
+                const snap = await getDocs(q);
+                if (!snap.empty) {
+                    resultData = snap.docs[0].data();
+                    answers = resultData.answers || [];
+                }
+            }
+            
+            // Si aún no tenemos datos, buscamos por examId y studentName
+            if (!resultData && examId && studentName) {
+                const q = query(dbRefs.examResults, where("examId", "==", examId));
+                const snap = await getDocs(q);
+                for (const docSnap of snap.docs) {
+                    const data = docSnap.data();
+                    if (data.studentName === studentName) {
+                        resultData = data;
+                        answers = data.answers || [];
+                        break;
+                    }
+                }
+            }
+            
+            if (!resultData) {
+                showToast("No se encontró el resultado del examen", "error");
+                return;
+            }
+            
+            // Obtener el examen
+            const examDoc = await getDoc(doc(dbRefs.exams, examId));
+            if (!examDoc.exists()) {
+                showToast("No se encontró el examen", "error");
+                return;
+            }
+            const exam = examDoc.data();
+            
+            // Crear PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Encabezado
+            doc.setFontSize(22);
             doc.setTextColor(59, 130, 246);
-            doc.text(`▶ Respuesta correcta: ${correctAnswer}`, 25, yPos);
-            yPos += 5;
+            doc.text(`Reporte de Evaluación: ${exam.title}`, 20, 20);
             
-            // Retroalimentación educativa
-            doc.setTextColor(100, 100, 100);
-            const feedback = isCorrect 
-                ? `¡Excelente! ${correctAnswer} es la respuesta correcta. Sigue así.`
-                : `La respuesta correcta es "${correctAnswer}". Revisa este tema nuevamente para mejorar.`;
-            const splitFeedback = doc.splitTextToSize(`📝 ${feedback}`, 160);
-            doc.text(splitFeedback, 25, yPos);
-            yPos += (splitFeedback.length * 5) + 8;
+            doc.setFontSize(12);
+            doc.setTextColor(80, 80, 80);
+            doc.text(`Estudiante: ${studentName}`, 20, 32);
+            doc.text(`Calificación: ${resultData.grade} (${resultData.score}/${resultData.total})`, 20, 38);
+            doc.text(`Fecha: ${new Date().toLocaleString()}`, 20, 44);
+            
+            // Recomendación según calificación
+            let recomendacion = "";
+            if (resultData.grade === 'AD') recomendacion = "Excelente, sigue así!";
+            else if (resultData.grade === 'A') recomendacion = "Muy bien, repasa los temas que fallaste.";
+            else if (resultData.grade === 'B') recomendacion = "Puedes mejorar, estudia más.";
+            else recomendacion = "Debes repasar los temas y volver a intentar.";
+            doc.text(`Recomendación: ${recomendacion}`, 20, 50);
+            
+            doc.setLineWidth(0.5);
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 56, 190, 56);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(30, 30, 30);
+            doc.text("Retroalimentación Detallada:", 20, 66);
+            
+            let yPos = 76;
+            doc.setFontSize(10);
+            
+            for (let idx = 0; idx < exam.questions.length; idx++) {
+                if (yPos > 270) { 
+                    doc.addPage(); 
+                    yPos = 20; 
+                }
+                
+                const q = exam.questions[idx];
+                const userAnswerIndex = answers[idx] !== undefined ? answers[idx] : -1;
+                const userAnswerText = userAnswerIndex === -1 ? "No respondió" : q.options[userAnswerIndex];
+                const correctAnswer = q.options[q.correct];
+                const isCorrect = (userAnswerIndex === q.correct);
+                
+                // Pregunta
+                doc.setTextColor(0, 0, 0);
+                doc.setFont("helvetica", "bold");
+                const splitQ = doc.splitTextToSize(`${idx + 1}. ${q.text}`, 170);
+                doc.text(splitQ, 20, yPos);
+                yPos += (splitQ.length * 5) + 2;
+                
+                // Respuesta del estudiante
+                doc.setFont("helvetica", "normal");
+                if (isCorrect) {
+                    doc.setTextColor(16, 185, 129);
+                    doc.text(`✓ Tu respuesta: ${userAnswerText} (Correcta)`, 25, yPos);
+                } else {
+                    doc.setTextColor(239, 68, 68);
+                    doc.text(`✗ Tu respuesta: ${userAnswerText} (Incorrecta)`, 25, yPos);
+                }
+                yPos += 5;
+                
+                // Respuesta correcta
+                doc.setTextColor(59, 130, 246);
+                doc.text(`▶ Respuesta correcta: ${correctAnswer}`, 25, yPos);
+                yPos += 5;
+                
+                // Retroalimentación educativa
+                doc.setTextColor(100, 100, 100);
+                const feedback = isCorrect 
+                    ? `¡Excelente! "${correctAnswer}" es la respuesta correcta. Sigue así.`
+                    : `La respuesta correcta es "${correctAnswer}". Revisa este tema nuevamente para mejorar.`;
+                const splitFeedback = doc.splitTextToSize(`📝 ${feedback}`, 160);
+                doc.text(splitFeedback, 25, yPos);
+                yPos += (splitFeedback.length * 5) + 8;
+            }
+            
+            // Pie de página
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text("Reporte generado por EduGestor IA - Plataforma educativa", 20, yPos + 5);
+            
+            doc.save(`Reporte_${exam.title}_${studentName}.pdf`);
+            showToast("Reporte descargado exitosamente", "success");
+        } catch (error) {
+            console.error("Error al generar reporte:", error);
+            showToast("Error al generar el reporte", "error");
         }
-        
-        doc.save(`Reporte_${exam.title}_${studentName}.pdf`);
-        showToast("Reporte descargado con retroalimentación", "success");
     }
     
     function sendStudentExamWhatsApp(phone, grade, examTitle){ if(!phone) return showToast("No hay número","error"); const msg=`📄 Resultado: ${examTitle}\nNota: ${grade}`; window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`,'_blank'); }
-    function renderGradesTable(){ const gradeFilter=document.getElementById("filterGradesGrade").value, areaFilter=document.getElementById("filterGradesArea").value; const tbody=document.getElementById("gradesTableBody"); if(!gradeFilter||!areaFilter){ tbody.innerHTML='<td><td colspan="6">Selecciona grado y área</td></tr>'; return; } const filtered=allExamResultsData.filter(r=>{ const s=allStudentsData.find(s=>s.id===r.studentId); const e=allExamsData.find(e=>e.id===r.examId); const sGrade=s?s.grade:r.studentGrade; const eArea=e?e.area:r.examArea; return sGrade===gradeFilter&&eArea===areaFilter; }); filtered.sort((a,b)=>{ const na=allStudentsData.find(s=>s.id===a.studentId)?.name||""; const nb=allStudentsData.find(s=>s.id===b.studentId)?.name||""; return na.localeCompare(nb); }); if(!filtered.length){ tbody.innerHTML='<tr><td colspan="6">No hay notas</td></tr>'; return; } tbody.innerHTML=filtered.map(r=>{ const s=allStudentsData.find(s=>s.id===r.studentId); const studentName=s?.name||"Removido"; const phone=s?.phones?.[0]||""; let color="text-red-500"; if(r.grade==='AD'||r.grade==='A') color="text-emerald-500"; else if(r.grade==='B') color="text-amber-500"; return `<tr class="border-b"><td class="p-3">${escapeHtml(studentName)}</td><td class="p-3">${escapeHtml(r.examTitle)}</td><td class="font-bold ${color} text-center">${r.grade}</td><td class="text-center">${r.score}/${r.total}</td><td class="text-center"><button class="view-student-exam-btn text-blue-600 mr-2" data-result-id="${r.id}" data-student-name="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Ver</button><button class="download-student-report-btn text-emerald-600 mr-2" data-result-id="${r.id}" data-student-name="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Reporte</button><button class="send-student-wa-btn text-green-600" data-phone="${phone}" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">WhatsApp</button></td><td class="text-right text-xs">${r.date?new Date(r.date.toMillis()).toLocaleDateString():''}</td></tr>`; }).join(''); document.querySelectorAll('.view-student-exam-btn').forEach(btn=>btn.onclick=()=>viewStudentExam(btn.dataset.resultId, btn.dataset.studentName, btn.dataset.examId)); document.querySelectorAll('.download-student-report-btn').forEach(btn=>btn.onclick=()=>downloadStudentReport(btn.dataset.resultId, btn.dataset.studentName, btn.dataset.examId)); document.querySelectorAll('.send-student-wa-btn').forEach(btn=>btn.onclick=()=>sendStudentExamWhatsApp(btn.dataset.phone, btn.dataset.grade, btn.dataset.exam)); }
+    
+    function renderGradesTable(){ 
+        const gradeFilter = document.getElementById("filterGradesGrade").value; 
+        const areaFilter = document.getElementById("filterGradesArea").value; 
+        const tbody = document.getElementById("gradesTableBody"); 
+        if(!gradeFilter || !areaFilter){ 
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">Selecciona grado y área</td></tr>'; 
+            return; 
+        } 
+        const filtered = allExamResultsData.filter(r => { 
+            const s = allStudentsData.find(s => s.id === r.studentId); 
+            const e = allExamsData.find(e => e.id === r.examId); 
+            const sGrade = s ? s.grade : r.studentGrade; 
+            const eArea = e ? e.area : r.examArea; 
+            return sGrade === gradeFilter && eArea === areaFilter; 
+        }); 
+        filtered.sort((a,b) => { 
+            const na = allStudentsData.find(s => s.id === a.studentId)?.name || ""; 
+            const nb = allStudentsData.find(s => s.id === b.studentId)?.name || ""; 
+            return na.localeCompare(nb); 
+        }); 
+        if(!filtered.length){ 
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4">No hay notas para este filtro</td></tr>'; 
+            return; 
+        } 
+        tbody.innerHTML = filtered.map(r => { 
+            const s = allStudentsData.find(s => s.id === r.studentId); 
+            const studentName = s?.name || "Removido"; 
+            const phone = s?.phones?.[0] || ""; 
+            let color = "text-red-500"; 
+            if(r.grade === 'AD' || r.grade === 'A') color = "text-emerald-500"; 
+            else if(r.grade === 'B') color = "text-amber-500"; 
+            return `<tr class="border-b"><td class="p-3">${escapeHtml(studentName)}</td><td class="p-3">${escapeHtml(r.examTitle)}</td><td class="font-bold ${color} text-center">${r.grade}</td><td class="text-center">${r.score}/${r.total}</td><td class="text-center"><button class="view-student-exam-btn text-blue-600 mr-2" data-result-id="${r.id}" data-student-name="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Ver</button><button class="download-student-report-btn text-emerald-600 mr-2" data-result-id="${r.id}" data-student-name="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Reporte</button><button class="send-student-wa-btn text-green-600" data-phone="${phone}" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">WhatsApp</button></td><td class="text-right text-xs">${r.date ? new Date(r.date.toMillis()).toLocaleDateString() : ''}</td></tr>`; 
+        }).join(''); 
+        
+        // Asignar eventos a los botones
+        document.querySelectorAll('.view-student-exam-btn').forEach(btn => { 
+            btn.onclick = () => viewStudentExam(btn.dataset.resultId, btn.dataset.studentName, btn.dataset.examId); 
+        }); 
+        document.querySelectorAll('.download-student-report-btn').forEach(btn => { 
+            btn.onclick = () => downloadStudentReport(btn.dataset.resultId, btn.dataset.studentName, btn.dataset.examId); 
+        }); 
+        document.querySelectorAll('.send-student-wa-btn').forEach(btn => { 
+            btn.onclick = () => sendStudentExamWhatsApp(btn.dataset.phone, btn.dataset.grade, btn.dataset.exam); 
+        }); 
+    }
+    
     document.getElementById("addStudentBtn")?.addEventListener("click", async ()=>{ if(!currentUserAuth) return; const name=document.getElementById("newStudentName").value.trim().toUpperCase(); const grade=document.getElementById("newStudentGrade").value; const phone=document.getElementById("newStudentPhone").value.trim(); if(!name||!grade) return showToast("Nombre y grado requeridos","error"); const btn=document.getElementById("addStudentBtn"); btn.innerHTML='<div class="spinner"></div>'; btn.disabled=true; try{ await addDoc(dbRefs.students,{name,grade,phones:phone?[phone]:[]}); showToast("Estudiante agregado","success"); document.getElementById("newStudentName").value=""; document.getElementById("newStudentPhone").value=""; document.getElementById("filterDirectoryGrade").value=grade; renderStudents(); }catch(e){ showToast("Error","error"); }finally{ btn.innerHTML='Guardar Estudiante'; btn.disabled=false; } });
     let unsubTasks,unsubExams,unsubSubs,unsubStudents,unsubExamResults;
     function loadDocData(){ if(!currentUserAuth) return; unsubTasks=onSnapshot(dbRefs.tasks, snap=>{ allTasksData=snap.docs.map(d=>({id:d.id,...d.data()})); allTasksData.sort((a,b)=>(b.createdAt?.toMillis()||0)-(a.createdAt?.toMillis()||0)); renderTasks(); }); unsubExams=onSnapshot(dbRefs.exams, snap=>{ allExamsData=snap.docs.map(d=>({id:d.id,...d.data()})); allExamsData.sort((a,b)=>(b.createdAt?.toMillis()||0)-(a.createdAt?.toMillis()||0)); renderExams(); renderGradesTable(); }); unsubSubs=onSnapshot(dbRefs.submissions, snap=>{ allSubsData=snap.docs.map(d=>({id:d.id,...d.data()})); allSubsData.sort((a,b)=>(b.submittedAt?.toMillis()||0)-(a.submittedAt?.toMillis()||0)); renderSubs(); }); unsubStudents=onSnapshot(dbRefs.students, snap=>{ allStudentsData=snap.docs.map(d=>({id:d.id,...d.data()})); allStudentsData.sort((a,b)=>a.name.localeCompare(b.name)); renderStudents(); renderGradesTable(); }); unsubExamResults=onSnapshot(dbRefs.examResults, snap=>{ allExamResultsData=snap.docs.map(d=>({id:d.id,...d.data()})); renderGradesTable(); }); }
@@ -331,7 +441,7 @@
     async function loadStudentGradesRealtime() { if(studentResultsUnsub) studentResultsUnsub(); if(!currentStudent) return; const q = query(dbRefs.examResults, where("studentId", "==", currentStudent.id)); studentResultsUnsub = onSnapshot(q, (snap) => { const results = snap.docs.map(d => d.data()); results.sort((a,b)=>(b.date?.toMillis()||0)-(a.date?.toMillis()||0)); renderStudentGrades(results); }); }
     function renderStudentGrades(results) { const container = document.getElementById("gradesList"); if(!results.length){ container.innerHTML = '<div class="col-span-full text-center py-8">Aún no tienes calificaciones.</div>'; return; } container.innerHTML = results.map(r => `<div class="bg-white dark:bg-gray-800 p-4 rounded shadow calif-card"><div class="font-bold">${escapeHtml(r.examTitle)}</div><div class="text-2xl font-bold ${r.grade==='AD'||r.grade==='A'?'text-emerald-500':r.grade==='B'?'text-amber-500':'text-red-500'}">${r.grade}</div><div>${r.score}/${r.total} aciertos</div><div class="text-xs text-gray-400">${r.date?new Date(r.date.toMillis()).toLocaleString():''}</div><button class="send-wa-grade bg-green-500 text-white px-3 py-1 rounded text-sm mt-2" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">📱 Enviar a padres</button></div>`).join(''); document.querySelectorAll('.send-wa-grade').forEach(btn => btn.onclick = () => { const phone = currentStudent.phones[0]?.replace(/\s/g,''); if(phone) window.open(`https://wa.me/51${phone}?text=${encodeURIComponent(`Mi nota en "${btn.dataset.exam}" es: ${btn.dataset.grade}`)}`,'_blank'); }); }
     async function startExam(exam) { const already = (await getDocs(query(dbRefs.examResults, where("studentId","==",currentStudent.id), where("examId","==",exam.id)))).docs.length > 0; if(already) return showToast("Ya rendiste este examen","info"); const modal = document.getElementById("examModal"); const content = document.getElementById("examModalContent"); document.getElementById("examModalTitle").innerText = exam.title; let timeLeft = 30*60; content.innerHTML = exam.questions.map((q,idx)=>`<div class="mb-4"><p class="font-bold">${idx+1}. ${escapeHtml(q.text)}</p><div class="pl-4">${q.options.map((opt,i)=>`<label class="block"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}</div></div>`).join(''); modal.classList.remove("hidden"); modal.classList.add("flex"); const timerSpan = document.getElementById("timer"); if(examTimerInterval) clearInterval(examTimerInterval); examTimerInterval = setInterval(()=>{ timeLeft--; timerSpan.innerText = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`; if(timeLeft<=0){ clearInterval(examTimerInterval); showToast("Tiempo agotado","info"); submitExam(exam,modal,content); } },1000); const submitBtn = document.getElementById("submitExamModal"), closeBtn = document.getElementById("closeExamModal"); const newSubmit = submitBtn.cloneNode(true), newClose = closeBtn.cloneNode(true); submitBtn.parentNode.replaceChild(newSubmit,submitBtn); closeBtn.parentNode.replaceChild(newClose,closeBtn); newSubmit.onclick = () => showConfirm("¿Terminar?",()=>{ clearInterval(examTimerInterval); submitExam(exam,modal,content); }); newClose.onclick = () => showConfirm("¿Abandonar? Se perderá el intento.",()=>{ clearInterval(examTimerInterval); modal.classList.add("hidden"); modal.classList.remove("flex"); }); }
-    async function submitExam(exam,modal,contentDiv){ const answers = []; exam.questions.forEach((_,idx)=>{ const selected = contentDiv.querySelector(`input[name="q${idx}"]:checked`); answers.push(selected?parseInt(selected.value):-1); }); let correct=0; exam.questions.forEach((q,idx)=>{ if(answers[idx]===q.correct) correct++; }); const percent = (correct/exam.questions.length)*100; let grade="C"; if(percent>=90) grade="AD"; else if(percent>=75) grade="A"; else if(percent>=60) grade="B"; modal.classList.add("hidden"); modal.classList.remove("flex"); try{ await addDoc(dbRefs.examResults,{ studentId:currentStudent.id, studentName:currentStudent.name, studentGrade:currentStudent.grade, examId:exam.id, examTitle:exam.title, examArea:exam.area, grade, score:correct, total:exam.questions.length, date:serverTimestamp(), answers }); showToast(`Nota: ${grade} (${correct}/${exam.questions.length})`,"success"); showConfirm("¿Descargar reporte con retroalimentación y enviar a tus padres?",()=>{ downloadStudentReport(null, currentStudent.name, exam.id); const phone=currentStudent.phones[0]?.replace(/\s/g,''); if(phone) window.open(`https://wa.me/51${phone}?text=${encodeURIComponent(`Mi examen "${exam.title}" obtuve ${grade}`)}`,'_blank'); }); }catch(e){ showToast("Error al guardar","error"); } }
+    async function submitExam(exam,modal,contentDiv){ const answers = []; exam.questions.forEach((_,idx)=>{ const selected = contentDiv.querySelector(`input[name="q${idx}"]:checked`); answers.push(selected?parseInt(selected.value):-1); }); let correct=0; exam.questions.forEach((q,idx)=>{ if(answers[idx]===q.correct) correct++; }); const percent = (correct/exam.questions.length)*100; let grade="C"; if(percent>=90) grade="AD"; else if(percent>=75) grade="A"; else if(percent>=60) grade="B"; modal.classList.add("hidden"); modal.classList.remove("flex"); try{ const docRef = await addDoc(dbRefs.examResults,{ studentId:currentStudent.id, studentName:currentStudent.name, studentGrade:currentStudent.grade, examId:exam.id, examTitle:exam.title, examArea:exam.area, grade, score:correct, total:exam.questions.length, date:serverTimestamp(), answers }); showToast(`Nota: ${grade} (${correct}/${exam.questions.length})`,"success"); showConfirm("¿Descargar reporte con retroalimentación y enviar a tus padres?",()=>{ downloadStudentReport(docRef.id, currentStudent.name, exam.id); const phone=currentStudent.phones[0]?.replace(/\s/g,''); if(phone) window.open(`https://wa.me/51${phone}?text=${encodeURIComponent(`Mi examen "${exam.title}" obtuve ${grade}`)}`,'_blank'); }); }catch(e){ showToast("Error al guardar","error"); } }
     async function initStudentPanel() { if(!currentStudent) return; document.getElementById("studentNameDisplay").innerText = currentStudent.name; document.getElementById("studentGradeDisplay").innerText = currentStudent.grade; loadStudentTasksRealtime(); loadStudentExamsRealtime(); loadStudentGradesRealtime(); }
 
     // ---------- Eventos de navegación ----------
@@ -356,7 +466,7 @@
     document.getElementById("refreshGradesBtn")?.addEventListener("click",()=>renderGradesTable());
     
     // Carga inicial de estudiantes (seed)
-    (async function seedStudents(){ if(!currentUserAuth) return; const snap=await getDocs(dbRefs.students); if(snap.empty){ const studentsDirectory = [ /* AÑADE AQUÍ TUS 407 ESTUDIANTES */ { name: "LLANQUE ALMIRON Yader Jocsan", grade: "QUINTO DE SECUNDARIA", phones: ["958005914"] } ]; for(const s of studentsDirectory) await addDoc(dbRefs.students,{name:s.name,grade:s.grade,phones:s.phones}); showToast("Directorio cargado","success"); } })();
+    (async function seedStudents(){ if(!currentUserAuth) return; const snap=await getDocs(dbRefs.students); if(snap.empty){ const studentsDirectory = [ { name: "LLANQUE ALMIRON Yader Jocsan", grade: "QUINTO DE SECUNDARIA", phones: ["958005914"] } ]; for(const s of studentsDirectory) await addDoc(dbRefs.students,{name:s.name,grade:s.grade,phones:s.phones}); showToast("Directorio cargado","success"); } })();
 </script>
 </body>
 </html>
