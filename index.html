@@ -4,174 +4,260 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>EduGestor IA - Aula Digital</title>
+    <!-- Tailwind CSS con configuración personalizada -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; display: inline-block; }
+        /* Estilos adicionales */
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #ffffff;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .toast { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; padding: 12px 20px; border-radius: 8px; z-index: 9999; opacity: 0; transition: opacity 0.3s; }
-        .toast.show { opacity: 1; }
-        body.dark { background-color: #1e1e2f; color: #e0e0e0; }
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background-color: #1f2937;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+        .card-hover {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
+        }
+        /* Modo oscuro suave */
+        .dark {
+            background-color: #111827;
+            color: #f3f4f6;
+        }
+        .dark .card {
+            background-color: #1f2937;
+            border-color: #374151;
+        }
+        .dark input, .dark select, .dark textarea {
+            background-color: #374151;
+            color: #f3f4f6;
+            border-color: #4b5563;
+        }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 transition-colors">
+<body class="bg-gray-50 text-gray-800 transition-colors">
 
-<!-- Toast container -->
+<!-- Toast -->
 <div id="toast" class="toast"></div>
 
 <!-- Pantalla de bienvenida -->
-<div id="welcomeScreen" class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-md w-full shadow-xl text-center">
-        <i class="fas fa-brain text-5xl text-blue-600 mb-4"></i>
-        <h1 class="text-3xl font-bold text-gray-800 dark:text-white">EduGestor IA</h1>
-        <p class="text-gray-500 dark:text-gray-400 mb-6">Plataforma educativa con IA</p>
-        <button id="teacherBtn" class="w-full bg-indigo-600 text-white py-3 rounded-xl mb-3 hover:bg-indigo-700 transition">Acceso Docente</button>
-        <button id="studentBtn" class="w-full bg-emerald-600 text-white py-3 rounded-xl hover:bg-emerald-700 transition">Acceso Estudiante</button>
+<div id="welcomeScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-blue-50">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-100">
+        <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-brain text-3xl text-indigo-600"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">EduGestor IA</h1>
+        <p class="text-gray-500 mb-6">Plataforma educativa con inteligencia artificial</p>
+        <button id="teacherBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition shadow-md mb-3">Acceso Docente</button>
+        <button id="studentBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition shadow-md">Acceso Estudiante</button>
     </div>
 </div>
 
 <!-- Modal docente -->
-<div id="teacherModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-96">
+<div id="teacherModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
         <h2 class="text-xl font-bold mb-4">Acceso Docente</h2>
-        <input type="password" id="teacherPass" placeholder="Contraseña" class="w-full border p-2 rounded mb-4 dark:bg-gray-700">
-        <button id="loginTeacher" class="bg-indigo-600 text-white w-full py-2 rounded">Ingresar</button>
-        <button id="closeTeacherModal" class="text-gray-500 mt-2 w-full">Cancelar</button>
+        <input type="password" id="teacherPass" placeholder="Contraseña" class="w-full border border-gray-300 p-3 rounded-lg mb-4 focus:ring-2 focus:ring-indigo-500">
+        <button id="loginTeacher" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">Ingresar</button>
+        <button id="closeTeacherModal" class="w-full text-gray-500 mt-2 text-sm">Cancelar</button>
     </div>
 </div>
 
-<!-- Modal estudiante (selección de grado y nombre) -->
-<div id="studentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white dark:bg-gray-800 rounded-xl p-6 w-96">
+<!-- Modal estudiante -->
+<div id="studentModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
         <h2 class="text-xl font-bold mb-4">Selecciona tu grado</h2>
-        <select id="studentGradeSelect" class="w-full border p-2 rounded mb-3 dark:bg-gray-700"></select>
-        <select id="studentNameSelect" class="w-full border p-2 rounded mb-4 dark:bg-gray-700"></select>
-        <button id="enterStudent" class="bg-emerald-600 text-white w-full py-2 rounded">Entrar</button>
-        <button id="closeStudentModal" class="text-gray-500 mt-2 w-full">Cancelar</button>
+        <select id="studentGradeSelect" class="w-full border border-gray-300 p-3 rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500"></select>
+        <select id="studentNameSelect" class="w-full border border-gray-300 p-3 rounded-lg mb-4 focus:ring-2 focus:ring-emerald-500"></select>
+        <button id="enterStudent" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition">Entrar</button>
+        <button id="closeStudentModal" class="w-full text-gray-500 mt-2 text-sm">Cancelar</button>
     </div>
 </div>
 
 <!-- Panel Docente -->
-<div id="teacherPanel" class="hidden min-h-screen bg-gray-100 dark:bg-gray-900">
-    <nav class="bg-indigo-700 text-white p-4 flex justify-between">
-        <h2 class="text-xl font-bold">Panel Docente</h2>
-        <button id="logoutTeacherPanel" class="bg-red-500 px-3 py-1 rounded">Salir</button>
+<div id="teacherPanel" class="hidden min-h-screen bg-gray-50">
+    <nav class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-indigo-600"><i class="fas fa-chalkboard-teacher mr-2"></i>Panel Docente</h2>
+            <button id="logoutTeacherPanel" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition">Salir</button>
+        </div>
     </nav>
-    <div class="p-6">
-        <div class="flex gap-2 border-b mb-4">
-            <button class="tab-btn active bg-indigo-600 text-white px-4 py-2 rounded-t" data-tab="tasksTab">Tareas</button>
-            <button class="tab-btn bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t" data-tab="examsTab">Exámenes</button>
-            <button class="tab-btn bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t" data-tab="gradesTab">Calificaciones</button>
-            <button class="tab-btn bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t" data-tab="studentsTab">Estudiantes</button>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-wrap gap-2 border-b border-gray-200 mb-6">
+            <button class="tab-btn active bg-indigo-600 text-white px-5 py-2 rounded-t-lg transition" data-tab="tasksTab">📝 Tareas</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="examsTab">📋 Exámenes</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="gradesTab">📊 Calificaciones</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="studentsTab">👥 Estudiantes</button>
         </div>
 
         <!-- Tareas -->
         <div id="tasksTab" class="tab-content">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
-                <h3 class="font-bold mb-2">Nueva Tarea</h3>
-                <input type="text" id="taskTitle" placeholder="Título" class="w-full border p-2 rounded mb-2 dark:bg-gray-700">
-                <select id="taskGrade" class="w-full border p-2 rounded mb-2 dark:bg-gray-700"></select>
-                <select id="taskArea" class="w-full border p-2 rounded mb-2 dark:bg-gray-700"></select>
-                <textarea id="taskDesc" placeholder="Descripción" class="w-full border p-2 rounded mb-2 dark:bg-gray-700" rows="2"></textarea>
-                <input type="file" id="taskFileInput" accept=".pdf,.doc,.docx,.txt" class="mb-2">
-                <input type="text" id="taskLink" placeholder="Enlace (YouTube, etc.)" class="w-full border p-2 rounded mb-2 dark:bg-gray-700">
-                <button id="publishTask" class="bg-indigo-600 text-white px-4 py-2 rounded">Publicar Tarea</button>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" id="taskTitle" placeholder="Título" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <select id="taskGrade" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500"></select>
+                    <select id="taskArea" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500"></select>
+                    <div class="flex gap-2">
+                        <textarea id="taskDesc" placeholder="Descripción (puedes generarla con IA)" class="border border-gray-300 p-3 rounded-lg flex-1 focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+                        <button id="generateTaskDesc" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition"><i class="fas fa-magic"></i> Generar IA</button>
+                    </div>
+                    <div class="md:col-span-2 flex flex-col md:flex-row gap-4">
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Archivo guía (PDF, Word, TXT)</label>
+                            <input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="w-full border border-gray-300 p-2 rounded-lg">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Enlace (YouTube, web)</label>
+                            <input type="text" id="taskLink" placeholder="https://..." class="w-full border border-gray-300 p-2 rounded-lg">
+                        </div>
+                    </div>
+                    <button id="publishTask" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition shadow-md">Publicar Tarea</button>
+                </div>
             </div>
-            <div id="tasksList" class="grid gap-4"></div>
+            <h3 class="font-bold text-lg mb-3">Tareas publicadas</h3>
+            <div class="flex gap-3 mb-4">
+                <select id="filterTasksGrade" class="border border-gray-300 p-2 rounded-lg"></select>
+                <select id="filterTasksArea" class="border border-gray-300 p-2 rounded-lg"></select>
+                <button id="refreshTasks" class="bg-gray-500 text-white px-3 py-1 rounded-lg">Refrescar</button>
+            </div>
+            <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
         <!-- Exámenes -->
         <div id="examsTab" class="tab-content hidden">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow mb-4">
-                <h3 class="font-bold mb-2">Crear Examen</h3>
-                <input type="text" id="examTitle" placeholder="Título" class="w-full border p-2 rounded mb-2 dark:bg-gray-700">
-                <select id="examGrade" class="w-full border p-2 rounded mb-2 dark:bg-gray-700"></select>
-                <select id="examArea" class="w-full border p-2 rounded mb-2 dark:bg-gray-700"></select>
-                <textarea id="examTopic" placeholder="Tema para generar preguntas con IA" class="w-full border p-2 rounded mb-2 dark:bg-gray-700" rows="2"></textarea>
-                <div class="flex gap-2 mb-2">
-                    <input type="number" id="numQuestions" placeholder="Nº preguntas" class="border p-2 rounded w-24 dark:bg-gray-700" value="5">
-                    <button id="generateQuestions" class="bg-purple-600 text-white px-3 py-2 rounded">Generar con IA</button>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
+                <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-robot text-purple-500 mr-2"></i>Crear Examen con IA</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="examTitle" placeholder="Título" class="border border-gray-300 p-3 rounded-lg">
+                    <select id="examGrade" class="border border-gray-300 p-3 rounded-lg"></select>
+                    <select id="examArea" class="border border-gray-300 p-3 rounded-lg"></select>
                 </div>
-                <div id="questionsEditor" class="border p-2 rounded mb-2"></div>
-                <button id="publishExam" class="bg-emerald-600 text-white px-4 py-2 rounded">Publicar Examen</button>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <textarea id="examTopic" placeholder="Describe el tema para generar preguntas" class="border border-gray-300 p-3 rounded-lg flex-1" rows="2"></textarea>
+                    <div class="bg-gray-50 p-3 rounded-lg flex items-center gap-2">
+                        <label class="font-semibold">Nº preguntas:</label>
+                        <input type="number" id="numQuestions" value="5" min="1" class="border p-2 rounded w-20">
+                        <button id="generateQuestions" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-bolt"></i> Generar IA</button>
+                    </div>
+                </div>
+                <div id="questionsEditor" class="space-y-3 mb-4 max-h-96 overflow-auto"></div>
+                <button id="publishExam" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg w-full transition shadow-md">Publicar Examen</button>
             </div>
-            <div id="examsList" class="grid gap-4"></div>
+            <h3 class="font-bold text-lg mb-3">Exámenes activos</h3>
+            <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
         <!-- Calificaciones (docente) -->
         <div id="gradesTab" class="tab-content hidden">
-            <div class="flex gap-2 mb-4">
-                <select id="filterGrade" class="border p-2 rounded dark:bg-gray-700"></select>
-                <select id="filterArea" class="border p-2 rounded dark:bg-gray-700"></select>
-                <button id="refreshGrades" class="bg-gray-500 text-white px-3 py-1 rounded">Refrescar</button>
-            </div>
-            <div id="gradesTable" class="overflow-x-auto">
-                <table class="w-full border-collapse bg-white dark:bg-gray-800">
-                    <thead><tr class="bg-gray-200 dark:bg-gray-700"><th>Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
-                    <tbody id="gradesTableBody"></tbody>
-                </table>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-4">
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <select id="filterGrade" class="border p-2 rounded-lg flex-1"></select>
+                    <select id="filterArea" class="border p-2 rounded-lg flex-1"></select>
+                    <button id="refreshGrades" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">Refrescar</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 border-b">
+                                <th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="gradesTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
         <!-- Estudiantes -->
         <div id="studentsTab" class="tab-content hidden">
-            <div class="bg-white dark:bg-gray-800 p-4 rounded shadow">
-                <h3 class="font-bold mb-2">Agregar Estudiante</h3>
-                <input type="text" id="newStudentName" placeholder="Nombre completo" class="w-full border p-2 rounded mb-2 dark:bg-gray-700">
-                <select id="newStudentGrade" class="w-full border p-2 rounded mb-2 dark:bg-gray-700"></select>
-                <input type="text" id="newStudentPhone" placeholder="Teléfono" class="w-full border p-2 rounded mb-2 dark:bg-gray-700">
-                <button id="addStudent" class="bg-emerald-600 text-white px-4 py-2 rounded">Guardar</button>
+            <div class="bg-white rounded-xl shadow-sm p-6">
+                <h3 class="text-lg font-bold mb-4">Agregar estudiante</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                    <input type="text" id="newStudentName" placeholder="Apellidos y nombres" class="border p-3 rounded-lg">
+                    <select id="newStudentGrade" class="border p-3 rounded-lg"></select>
+                    <input type="text" id="newStudentPhone" placeholder="Teléfono" class="border p-3 rounded-lg">
+                    <button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar estudiante</button>
+                </div>
                 <hr class="my-4">
-                <select id="filterStudentsGrade" class="w-full border p-2 rounded mb-2 dark:bg-gray-700"></select>
-                <div id="studentsList" class="grid gap-2"></div>
+                <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-4"></select>
+                <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Panel Estudiante -->
-<div id="studentPanel" class="hidden min-h-screen bg-gray-100 dark:bg-gray-900">
-    <nav class="bg-emerald-700 text-white p-4 flex justify-between">
-        <div><span id="studentNameSpan" class="font-bold"></span> - <span id="studentGradeSpan"></span></div>
-        <button id="logoutStudentPanel" class="bg-red-500 px-3 py-1 rounded">Salir</button>
+<div id="studentPanel" class="hidden min-h-screen bg-gray-50">
+    <nav class="bg-white shadow-md border-b sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <i class="fas fa-user-graduate text-emerald-600 text-xl"></i>
+                <span id="studentNameSpan" class="font-bold text-gray-800"></span>
+                <span id="studentGradeSpan" class="text-sm text-gray-500"></span>
+            </div>
+            <button id="logoutStudentPanel" class="bg-red-500 text-white px-4 py-2 rounded-lg">Salir</button>
+        </div>
     </nav>
-    <div class="p-6">
-        <div class="flex gap-2 border-b mb-4">
-            <button class="student-tab-btn active bg-emerald-600 text-white px-4 py-2 rounded-t" data-stab="studentTasksTab">Mis Tareas</button>
-            <button class="student-tab-btn bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t" data-stab="studentExamsTab">Evaluaciones</button>
-            <button class="student-tab-btn bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded-t" data-stab="studentGradesTab">Calificaciones</button>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-wrap gap-2 border-b mb-6">
+            <button class="student-tab-btn active bg-emerald-600 text-white px-5 py-2 rounded-t-lg" data-stab="studentTasksTab">📚 Mis Tareas</button>
+            <button class="student-tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-stab="studentExamsTab">📝 Evaluaciones</button>
+            <button class="student-tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-stab="studentGradesTab">⭐ Calificaciones</button>
         </div>
-        <div id="studentTasksTab" class="student-tab-content">
-            <div id="studentTasksList" class="grid gap-4"></div>
-        </div>
-        <div id="studentExamsTab" class="student-tab-content hidden">
-            <div id="studentExamsList" class="grid gap-4"></div>
-        </div>
-        <div id="studentGradesTab" class="student-tab-content hidden">
-            <div id="studentGradesList" class="grid gap-4"></div>
-        </div>
+        <div id="studentTasksTab" class="student-tab-content"><div id="studentTasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
+        <div id="studentExamsTab" class="student-tab-content hidden"><div id="studentExamsList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></div>
+        <div id="studentGradesTab" class="student-tab-content hidden"><div id="studentGradesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
     </div>
 </div>
 
-<!-- Modal para tomar examen -->
-<div id="examTakeModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 p-4 overflow-auto">
-    <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-auto p-4">
-        <h2 id="examTakeTitle" class="text-xl font-bold mb-4">Examen</h2>
+<!-- Modales de examen y ver respuestas -->
+<div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
+        <h2 id="examTakeTitle" class="text-xl font-bold mb-4"></h2>
         <div id="examTakeQuestions"></div>
-        <div class="flex justify-end gap-2 mt-4">
-            <button id="cancelExam" class="bg-gray-400 px-4 py-2 rounded">Cancelar</button>
-            <button id="submitExamBtn" class="bg-emerald-600 text-white px-4 py-2 rounded">Enviar</button>
+        <div class="flex justify-end gap-3 mt-6">
+            <button id="cancelExam" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button>
+            <button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar examen</button>
         </div>
     </div>
 </div>
-
-<!-- Modal para ver respuestas del estudiante -->
-<div id="viewAnswersModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50 p-4 overflow-auto">
-    <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-auto p-4">
-        <h2 id="viewAnswersTitle" class="text-xl font-bold mb-4">Respuestas del examen</h2>
+<div id="viewAnswersModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
+    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
+        <h2 id="viewAnswersTitle" class="text-xl font-bold mb-4"></h2>
         <div id="viewAnswersContent"></div>
-        <button id="closeAnswersModal" class="bg-gray-500 text-white px-4 py-2 rounded mt-4">Cerrar</button>
+        <button id="closeAnswersModal" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-4">Cerrar</button>
     </div>
 </div>
 
@@ -181,7 +267,7 @@
     import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // ---------- Firebase Config ----------
+    // ---------- Firebase ----------
     const firebaseConfig = {
         apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
         authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -194,7 +280,6 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
-
     const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
 
     // Referencias
@@ -206,13 +291,9 @@
 
     let currentUser = null;
     let currentStudent = null;
-    let allStudents = [];
-    let allTasks = [];
-    let allExams = [];
-    let allSubmissions = [];
-    let allResults = [];
+    let allStudents = [], allTasks = [], allExams = [], allResults = [];
 
-    // Helper: toast
+    // Helper toast
     function showToast(msg, type='info') {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -220,11 +301,11 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Helper: cargar selects de grados
+    // Grados y áreas
     const allGrades = ["PRIMERO DE PRIMARIA","SEGUNDO DE PRIMARIA","TERCERO DE PRIMARIA","CUARTO DE PRIMARIA","QUINTO DE PRIMARIA","SEXTO DE PRIMARIA","PRIMERO DE SECUNDARIA","SEGUNDO DE SECUNDARIA","TERCERO DE SECUNDARIA","CUARTO DE SECUNDARIA","QUINTO DE SECUNDARIA"];
     const allAreas = ["Matemáticas","Comunicación","Ciencias Sociales","Ciencia y Tecnología","Personal Social","Inglés","Arte y Cultura","Educación Física","Computación","Educación Religiosa","Tutoría","EPT"];
 
-    function populateGradeSelects() {
+    function populateSelects() {
         const selects = ['taskGrade', 'examGrade', 'newStudentGrade', 'filterStudentsGrade', 'filterGrade', 'studentGradeSelect'];
         selects.forEach(id => {
             const el = document.getElementById(id);
@@ -239,19 +320,17 @@
 
     // Autenticación anónima
     signInAnonymously(auth).catch(e => console.error(e));
-    onAuthStateChanged(auth, user => { currentUser = user; if (user) seedInitialStudents(); });
+    onAuthStateChanged(auth, user => { currentUser = user; if (user) seedStudents(); });
 
-    // Datos iniciales de estudiantes (solo ejemplo, puedes agregar más)
     const initialStudents = [
         { name: "LLANQUE ALMIRON Yader Jocsan", grade: "QUINTO DE SECUNDARIA", phones: ["958005914"] },
         { name: "BATALLANOS SACSI Flor de Liz", grade: "PRIMERO DE PRIMARIA", phones: ["918274035"] }
     ];
-
-    async function seedInitialStudents() {
+    async function seedStudents() {
         const snap = await getDocs(studentsRef);
         if (snap.empty) {
             for (const s of initialStudents) await addDoc(studentsRef, s);
-            showToast("Directorio cargado", "success");
+            showToast("Directorio inicial cargado", "success");
         }
     }
 
@@ -260,59 +339,56 @@
         onSnapshot(studentsRef, snap => { allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderStudentsList(); renderGradesTable(); });
         onSnapshot(tasksRef, snap => { allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasksList(); });
         onSnapshot(examsRef, snap => { allExams = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderExamsList(); });
-        onSnapshot(submissionsRef, snap => { allSubmissions = snap.docs.map(d => ({ id: d.id, ...d.data() })); });
-        onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); renderStudentGrades(); });
+        onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
     }
 
-    // ========== DOCENTE ==========
+    // Funciones de renderizado docente
     function renderTasksList() {
         const container = document.getElementById('tasksList');
         if (!container) return;
-        const gradeFilter = document.getElementById('filterTasksGrade')?.value || '';
-        const areaFilter = document.getElementById('filterTasksArea')?.value || '';
-        let filtered = allTasks.filter(t => (!gradeFilter || t.grade === gradeFilter) && (!areaFilter || t.area === areaFilter));
+        const grade = document.getElementById('filterTasksGrade')?.value || '';
+        const area = document.getElementById('filterTasksArea')?.value || '';
+        let filtered = allTasks.filter(t => (!grade || t.grade === grade) && (!area || t.area === area));
         container.innerHTML = filtered.map(t => `
-            <div class="bg-white dark:bg-gray-800 p-3 rounded shadow">
-                <div class="font-bold">${escapeHtml(t.title)}</div>
-                <div>${t.area} - ${t.grade}</div>
-                <p class="text-sm">${escapeHtml(t.description)}</p>
-                ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-blue-500 text-sm">📎 Archivo adjunto</a>` : ''}
-                ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-500 text-sm ml-2">🔗 Enlace</a>` : ''}
-                <button class="delete-task bg-red-500 text-white px-2 py-1 rounded text-sm mt-2" data-id="${t.id}">Eliminar</button>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden card-hover">
+                <div class="p-4">
+                    <div class="font-bold text-lg text-indigo-700">${escapeHtml(t.title)}</div>
+                    <div class="text-sm text-gray-500 mb-2">${t.area} · ${t.grade}</div>
+                    <p class="text-gray-600 text-sm mb-3">${escapeHtml(t.description?.substring(0, 100))}${t.description?.length > 100 ? '...' : ''}</p>
+                    ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-flex items-center"><i class="fas fa-paperclip mr-1"></i> Archivo adjunto</a>` : ''}
+                    ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm ml-3 inline-flex items-center"><i class="fas fa-link mr-1"></i> Enlace</a>` : ''}
+                    <button class="delete-task mt-3 bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm w-full" data-id="${t.id}">Eliminar tarea</button>
+                </div>
             </div>
         `).join('');
         document.querySelectorAll('.delete-task').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(tasksRef, btn.dataset.id)); showToast("Tarea eliminada"); });
     }
-
     function renderExamsList() {
         const container = document.getElementById('examsList');
         if (!container) return;
         container.innerHTML = allExams.map(e => `
-            <div class="bg-white dark:bg-gray-800 p-3 rounded shadow">
-                <div class="font-bold">${escapeHtml(e.title)}</div>
-                <div>${e.area} - ${e.grade}</div>
-                <div>${e.questions?.length || 0} preguntas</div>
-                <button class="delete-exam bg-red-500 text-white px-2 py-1 rounded text-sm mt-2" data-id="${e.id}">Eliminar</button>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                <div class="font-bold text-emerald-700">${escapeHtml(e.title)}</div>
+                <div class="text-sm text-gray-500">${e.area} · ${e.grade}</div>
+                <div class="text-sm">${e.questions?.length || 0} preguntas</div>
+                <button class="delete-exam mt-2 bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm" data-id="${e.id}">Eliminar examen</button>
             </div>
         `).join('');
         document.querySelectorAll('.delete-exam').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(examsRef, btn.dataset.id)); showToast("Examen eliminado"); });
     }
-
     function renderStudentsList() {
         const grade = document.getElementById('filterStudentsGrade')?.value;
         const container = document.getElementById('studentsList');
-        if (!container) return;
-        if (!grade) { container.innerHTML = '<p>Selecciona un grado</p>'; return; }
+        if (!grade) { container.innerHTML = '<p class="text-gray-500">Selecciona un grado</p>'; return; }
         const filtered = allStudents.filter(s => s.grade === grade);
         container.innerHTML = filtered.map(s => `
-            <div class="bg-white dark:bg-gray-800 p-2 rounded shadow flex justify-between items-center">
-                <div><strong>${escapeHtml(s.name)}</strong><br>📞 ${s.phones?.join(', ') || ''}</div>
+            <div class="bg-white rounded-lg shadow-sm p-3 flex justify-between items-center border">
+                <div><strong>${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-500">📞 ${s.phones?.join(', ') || ''}</span></div>
                 <button class="delete-student bg-red-500 text-white px-2 py-1 rounded text-sm" data-id="${s.id}">Eliminar</button>
             </div>
         `).join('');
         document.querySelectorAll('.delete-student').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(studentsRef, btn.dataset.id)); showToast("Estudiante eliminado"); });
     }
-
     async function renderGradesTable() {
         const tbody = document.getElementById('gradesTableBody');
         if (!tbody) return;
@@ -322,24 +398,24 @@
         const filtered = allResults.filter(r => {
             const student = allStudents.find(s => s.id === r.studentId);
             const exam = allExams.find(e => e.id === r.examId);
-            return (student?.grade === gradeFilter) && (exam?.area === areaFilter);
+            return student?.grade === gradeFilter && exam?.area === areaFilter;
         });
-        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay notas</td></tr>'; return; }
+        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></tr>'; return; }
         tbody.innerHTML = filtered.map(r => {
             const student = allStudents.find(s => s.id === r.studentId);
             const studentName = student?.name || 'Desconocido';
             const phone = student?.phones?.[0] || '';
             return `
-                <tr class="border-b">
-                    <td class="p-2">${escapeHtml(studentName)}</td>
-                    <td>${escapeHtml(r.examTitle)}</td>
-                    <td class="font-bold">${r.grade}</td>
-                    <td class="text-center">
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3">${escapeHtml(studentName)}</td>
+                    <td class="p-3">${escapeHtml(r.examTitle)}</td>
+                    <td class="p-3 font-bold">${r.grade}</td>
+                    <td class="p-3">
                         <button class="view-results-btn text-blue-600 mr-2" data-result-id="${r.id}" data-student="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Ver</button>
                         <button class="download-report-btn text-emerald-600 mr-2" data-result-id="${r.id}" data-student="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Reporte</button>
                         <button class="whatsapp-btn text-green-600" data-phone="${phone}" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">WhatsApp</button>
                     </td>
-                    <td class="text-right text-xs">${r.date ? new Date(r.date.toMillis()).toLocaleDateString() : ''}</td>
+                    <td class="p-3 text-xs text-gray-500">${r.date ? new Date(r.date.toMillis()).toLocaleDateString() : ''}</td>
                 </tr>
             `;
         }).join('');
@@ -349,14 +425,14 @@
         document.querySelectorAll('.whatsapp-btn').forEach(btn => btn.onclick = () => { if(btn.dataset.phone) window.open(`https://wa.me/${btn.dataset.phone}?text=Resultado: ${btn.dataset.exam} - Nota: ${btn.dataset.grade}`); });
     }
 
-    // ========== FUNCIONES DE REPORTE PDF ==========
+    // ========== REPORTE PDF ==========
     async function downloadPDFReport(resultId, studentName, examId) {
         try {
             const resultDoc = await getDoc(doc(resultsRef, resultId));
-            if (!resultDoc.exists()) throw new Error("Resultado no encontrado");
+            if (!resultDoc.exists()) throw new Error();
             const result = resultDoc.data();
             const examDoc = await getDoc(doc(examsRef, examId));
-            if (!examDoc.exists()) throw new Error("Examen no encontrado");
+            if (!examDoc.exists()) throw new Error();
             const exam = examDoc.data();
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF();
@@ -381,7 +457,7 @@
             });
             pdf.save(`Reporte_${exam.title}_${studentName}.pdf`);
             showToast("Reporte descargado", "success");
-        } catch(e) { showToast("Error al generar reporte", "error"); console.error(e); }
+        } catch(e) { showToast("Error al generar reporte", "error"); }
     }
 
     async function viewStudentAnswers(resultId, studentName, examId) {
@@ -393,15 +469,15 @@
         const exam = examDoc.data();
         const modal = document.getElementById('viewAnswersModal');
         document.getElementById('viewAnswersTitle').innerHTML = `${exam.title} - ${studentName}`;
-        let html = `<div class="mb-2 font-bold">Calificación: ${result.grade} (${result.score}/${result.total})</div>`;
+        let html = `<div class="mb-3 p-2 bg-gray-100 rounded">Calificación: ${result.grade} (${result.score}/${result.total})</div>`;
         exam.questions.forEach((q, idx) => {
             const userAns = result.answers[idx] !== undefined ? result.answers[idx] : -1;
             const userText = userAns === -1 ? "No respondió" : q.options[userAns];
             const isCorrect = userAns === q.correct;
-            html += `<div class="border p-2 mb-2 rounded">
-                        <p><strong>${idx+1}. ${q.text}</strong></p>
+            html += `<div class="border p-3 mb-3 rounded-lg">
+                        <p class="font-semibold">${idx+1}. ${escapeHtml(q.text)}</p>
                         <p>Tu respuesta: ${userText} ${isCorrect ? '✅' : '❌'}</p>
-                        <p class="text-blue-600">Correcta: ${q.options[q.correct]}</p>
+                        <p class="text-blue-600">Respuesta correcta: ${q.options[q.correct]}</p>
                     </div>`;
         });
         document.getElementById('viewAnswersContent').innerHTML = html;
@@ -415,15 +491,15 @@
         if (!container || !currentStudent) return;
         const tasks = allTasks.filter(t => t.grade === currentStudent.grade);
         container.innerHTML = tasks.map(t => `
-            <div class="bg-white dark:bg-gray-800 p-3 rounded shadow">
-                <div class="font-bold">${escapeHtml(t.title)}</div>
-                <div>${t.area}</div>
-                <p class="text-sm">${escapeHtml(t.description)}</p>
-                ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-blue-500 text-sm">📎 Recurso guía</a>` : ''}
-                ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-500 text-sm ml-2">🔗 Enlace</a>` : ''}
-                <div class="mt-2">
-                    <input type="file" id="file_${t.id}" class="text-sm">
-                    <button class="submit-task bg-emerald-500 text-white px-3 py-1 rounded text-sm mt-1" data-taskid="${t.id}" data-title="${escapeHtml(t.title)}" data-area="${escapeHtml(t.area)}">Entregar tarea</button>
+            <div class="bg-white rounded-xl shadow-sm border p-4 card-hover">
+                <div class="font-bold text-indigo-700">${escapeHtml(t.title)}</div>
+                <div class="text-sm text-gray-500">${t.area}</div>
+                <p class="text-gray-600 text-sm my-2">${escapeHtml(t.description?.substring(0, 100))}</p>
+                ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-block mb-2"><i class="fas fa-download"></i> Recurso guía</a>` : ''}
+                ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm inline-block ml-2"><i class="fas fa-external-link-alt"></i> Enlace</a>` : ''}
+                <div class="mt-3">
+                    <input type="file" id="file_${t.id}" class="text-sm w-full border p-1 rounded">
+                    <button class="submit-task mt-2 bg-emerald-500 text-white px-3 py-1 rounded-lg w-full" data-taskid="${t.id}" data-title="${escapeHtml(t.title)}" data-area="${escapeHtml(t.area)}">Entregar tarea</button>
                 </div>
             </div>
         `).join('');
@@ -448,25 +524,26 @@
         if (!container || !currentStudent) return;
         const exams = allExams.filter(e => e.grade === currentStudent.grade);
         container.innerHTML = exams.map(e => `
-            <div class="bg-white dark:bg-gray-800 p-3 rounded shadow flex justify-between items-center">
-                <div><div class="font-bold">${escapeHtml(e.title)}</div><div>${e.area}</div><div>${e.questions.length} preguntas</div></div>
-                <button class="take-exam bg-purple-600 text-white px-3 py-1 rounded" data-exam='${JSON.stringify(e)}'>Rendir</button>
+            <div class="bg-white rounded-xl shadow-sm border p-4 flex justify-between items-center">
+                <div><div class="font-bold text-emerald-700">${escapeHtml(e.title)}</div><div class="text-sm text-gray-500">${e.area}</div><div>${e.questions.length} preguntas</div></div>
+                <button class="take-exam bg-purple-600 text-white px-4 py-2 rounded-lg" data-exam='${JSON.stringify(e)}'>Rendir</button>
             </div>
         `).join('');
         document.querySelectorAll('.take-exam').forEach(btn => btn.onclick = () => startExam(JSON.parse(btn.dataset.exam)));
     }
 
     async function startExam(exam) {
-        // Verificar si ya rindió
         const already = allResults.some(r => r.studentId === currentStudent.id && r.examId === exam.id);
         if (already) { showToast("Ya rendiste este examen", "info"); return; }
         const modal = document.getElementById('examTakeModal');
-        document.getElementById('examTakeTitle').innerText = exam.title;
+        document.getElementById('examTakeTitle').innerHTML = exam.title;
         const questionsDiv = document.getElementById('examTakeQuestions');
         questionsDiv.innerHTML = exam.questions.map((q, idx) => `
-            <div class="mb-3 border p-2 rounded">
-                <p class="font-bold">${idx+1}. ${escapeHtml(q.text)}</p>
-                ${q.options.map((opt, i) => `<label class="block"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}
+            <div class="mb-4 border-b pb-2">
+                <p class="font-semibold mb-2">${idx+1}. ${escapeHtml(q.text)}</p>
+                <div class="space-y-1 pl-4">
+                    ${q.options.map((opt, i) => `<label class="flex items-center gap-2"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}
+                </div>
             </div>
         `).join('');
         modal.classList.remove('hidden');
@@ -499,12 +576,11 @@
             showToast(`Nota: ${grade} (${correct}/${exam.questions.length})`, "success");
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            // Descarga automática del reporte
+            // Descargar automáticamente el reporte
             await downloadPDFReport(resultRef.id, currentStudent.name, exam.id);
-            // Preguntar si enviar por WhatsApp
             if (currentStudent.phones && currentStudent.phones[0]) {
                 if (confirm("¿Enviar resultado por WhatsApp a tus padres?")) {
-                    window.open(`https://wa.me/${currentStudent.phones[0].replace(/\s/g,'')}?text=Mi examen "${exam.title}" obtuve ${grade}`, '_blank');
+                    window.open(`https://wa.me/${currentStudent.phones[0].replace(/\s/g, '')}?text=Mi examen "${exam.title}" obtuve ${grade}`, '_blank');
                 }
             }
             renderStudentGrades();
@@ -516,17 +592,17 @@
         if (!container || !currentStudent) return;
         const myResults = allResults.filter(r => r.studentId === currentStudent.id);
         container.innerHTML = myResults.map(r => `
-            <div class="bg-white dark:bg-gray-800 p-3 rounded shadow">
-                <div class="font-bold">${escapeHtml(r.examTitle)}</div>
-                <div class="text-2xl font-bold">${r.grade}</div>
-                <div>${r.score}/${r.total}</div>
-                <button class="view-my-exam text-blue-600 text-sm mt-1" data-result-id="${r.id}" data-exam-id="${r.examId}">Ver respuestas</button>
+            <div class="bg-white rounded-xl shadow-sm border p-4">
+                <div class="font-bold text-gray-800">${escapeHtml(r.examTitle)}</div>
+                <div class="text-3xl font-bold ${r.grade === 'AD' ? 'text-emerald-600' : r.grade === 'A' ? 'text-blue-600' : r.grade === 'B' ? 'text-amber-600' : 'text-red-600'}">${r.grade}</div>
+                <div>${r.score}/${r.total} aciertos</div>
+                <button class="view-my-exam mt-2 text-blue-600 text-sm" data-result-id="${r.id}" data-exam-id="${r.examId}">Ver respuestas</button>
             </div>
         `).join('');
         document.querySelectorAll('.view-my-exam').forEach(btn => btn.onclick = () => viewStudentAnswers(btn.dataset.resultId, currentStudent.name, btn.dataset.examId));
     }
 
-    // ========== EVENTOS ==========
+    // ========== EVENTOS Y NAVEGACIÓN ==========
     document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
     document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
     document.getElementById('loginTeacher').onclick = () => {
@@ -534,7 +610,7 @@
             document.getElementById('teacherModal').classList.add('hidden');
             document.getElementById('welcomeScreen').classList.add('hidden');
             document.getElementById('teacherPanel').classList.remove('hidden');
-            populateGradeSelects();
+            populateSelects();
             loadData();
         } else showToast("Contraseña incorrecta");
     };
@@ -542,10 +618,9 @@
         document.getElementById('teacherPanel').classList.add('hidden');
         document.getElementById('welcomeScreen').classList.remove('hidden');
     };
-
     document.getElementById('studentBtn').onclick = async () => {
-        await seedInitialStudents();
-        populateGradeSelects();
+        await seedStudents();
+        populateSelects();
         document.getElementById('studentModal').classList.remove('hidden');
         const gradeSelect = document.getElementById('studentGradeSelect');
         const nameSelect = document.getElementById('studentNameSelect');
@@ -566,7 +641,7 @@
         document.getElementById('studentPanel').classList.remove('hidden');
         document.getElementById('studentNameSpan').innerText = currentStudent.name;
         document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
-        // Cargar datos en tiempo real para el estudiante
+        // Suscribirse a cambios
         const unsubTasks = onSnapshot(tasksRef, () => renderStudentTasks());
         const unsubExams = onSnapshot(examsRef, () => renderStudentExams());
         const unsubResults = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
@@ -579,7 +654,7 @@
         currentStudent = null;
     };
 
-    // Pestañas docente
+    // Pestañas
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
@@ -597,15 +672,15 @@
         };
     });
 
-    // Publicar tarea
+    // Publicar tarea con archivo
     document.getElementById('publishTask').onclick = async () => {
         const title = document.getElementById('taskTitle').value;
         const grade = document.getElementById('taskGrade').value;
         const area = document.getElementById('taskArea').value;
         const desc = document.getElementById('taskDesc').value;
-        const file = document.getElementById('taskFileInput').files[0];
+        const file = document.getElementById('taskFile').files[0];
         const link = document.getElementById('taskLink').value;
-        if (!title || !grade || !area) return showToast("Complete título, grado y área");
+        if (!title || !grade || !area || !desc) return showToast("Complete título, grado, área y descripción");
         let fileURL = null;
         if (file) {
             const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`);
@@ -616,29 +691,46 @@
         showToast("Tarea publicada");
         document.getElementById('taskTitle').value = '';
         document.getElementById('taskDesc').value = '';
-        document.getElementById('taskFileInput').value = '';
+        document.getElementById('taskFile').value = '';
         document.getElementById('taskLink').value = '';
+    };
+
+    // Generar descripción de tarea con IA
+    document.getElementById('generateTaskDesc').onclick = async () => {
+        const topic = document.getElementById('taskTitle').value;
+        if (!topic) return showToast("Escribe un título para generar la descripción");
+        const btn = document.getElementById('generateTaskDesc');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div>';
+        try {
+            const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+                body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 })
+            });
+            const data = await res.json();
+            const desc = data.choices[0].message.content;
+            document.getElementById('taskDesc').value = desc;
+            showToast("Descripción generada", "success");
+        } catch(e) { showToast("Error al generar descripción", "error"); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Generar IA'; }
     };
 
     // Generar preguntas con IA
     document.getElementById('generateQuestions').onclick = async () => {
         const topic = document.getElementById('examTopic').value;
         const num = parseInt(document.getElementById('numQuestions').value);
-        if (!topic) return showToast("Escribe un tema");
+        if (!topic) return showToast("Escribe el tema");
         const btn = document.getElementById('generateQuestions');
         btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Generando...';
+        btn.innerHTML = '<div class="spinner"></div>';
         try {
-            const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
+            const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
-                body: JSON.stringify({
-                    model: "deepseek-chat",
-                    messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }],
-                    temperature: 0.7
-                })
+                body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }], temperature: 0.7 })
             });
-            const data = await response.json();
+            const data = await res.json();
             let content = data.choices[0].message.content;
             let clean = content.replace(/```json/g,'').replace(/```/g,'').trim();
             let questions = JSON.parse(clean);
@@ -646,14 +738,14 @@
             editor.innerHTML = '';
             questions.forEach((q, idx) => {
                 const div = document.createElement('div');
-                div.className = 'border p-2 mb-2 rounded relative';
+                div.className = 'border rounded-lg p-3 bg-gray-50 relative';
                 div.innerHTML = `
-                    <button class="remove-question text-red-500 absolute top-1 right-1">🗑️</button>
-                    <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-1 mb-1">
-                    <div class="grid grid-cols-2 gap-1">
-                        ${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-1">`).join('')}
+                    <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
+                    <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        ${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}
                     </div>
-                    <select class="correct-option mt-1 border p-1">
+                    <select class="correct-option mt-2 border p-2 rounded w-full">
                         <option value="0" ${q.correct===0?'selected':''}>Opción 1 correcta</option>
                         <option value="1" ${q.correct===1?'selected':''}>Opción 2 correcta</option>
                         <option value="2" ${q.correct===2?'selected':''}>Opción 3 correcta</option>
@@ -664,7 +756,8 @@
             });
             document.querySelectorAll('.remove-question').forEach(btn => btn.onclick = function() { this.closest('.border').remove(); });
             showToast("Preguntas generadas", "success");
-        } catch(e) { showToast("Error con IA, usa preguntas manuales", "error"); } finally { btn.disabled = false; btn.innerHTML = "Generar con IA"; }
+        } catch(e) { showToast("Error con IA, edita manualmente", "error"); }
+        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
     };
 
     // Publicar examen
@@ -708,6 +801,7 @@
     document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
     document.getElementById('filterArea')?.addEventListener('change', () => renderGradesTable());
     document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
+    document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
     document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
 
     // Cerrar modal de respuestas
