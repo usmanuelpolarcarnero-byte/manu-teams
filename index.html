@@ -4,14 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>EduGestor IA - Aula Digital</title>
-    <!-- Tailwind CSS con configuración personalizada -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- jsPDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Estilos adicionales */
         body {
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
@@ -40,9 +36,7 @@
             transition: opacity 0.3s;
             pointer-events: none;
         }
-        .toast.show {
-            opacity: 1;
-        }
+        .toast.show { opacity: 1; }
         .card-hover {
             transition: transform 0.2s, box-shadow 0.2s;
         }
@@ -50,7 +44,6 @@
             transform: translateY(-4px);
             box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
         }
-        /* Modo oscuro suave */
         .dark {
             background-color: #111827;
             color: #f3f4f6;
@@ -126,11 +119,15 @@
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
                 <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="taskTitle" placeholder="Título" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    <select id="taskGrade" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500"></select>
-                    <select id="taskArea" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500"></select>
+                    <input type="text" id="taskTitle" placeholder="Título (obligatorio)" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <select id="taskGrade" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Grado (opcional) --</option>
+                    </select>
+                    <select id="taskArea" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <option value="">-- Área (opcional) --</option>
+                    </select>
                     <div class="flex gap-2">
-                        <textarea id="taskDesc" placeholder="Descripción (puedes generarla con IA)" class="border border-gray-300 p-3 rounded-lg flex-1 focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+                        <textarea id="taskDesc" placeholder="Descripción (opcional)" class="border border-gray-300 p-3 rounded-lg flex-1 focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
                         <button id="generateTaskDesc" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition"><i class="fas fa-magic"></i> Generar IA</button>
                     </div>
                     <div class="md:col-span-2 flex flex-col md:flex-row gap-4">
@@ -316,6 +313,11 @@
             const el = document.getElementById(id);
             if (el) el.innerHTML = '<option value="">-- Seleccionar --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
         });
+        // Para filtros de tareas
+        const filterGrade = document.getElementById('filterTasksGrade');
+        if (filterGrade) filterGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+        const filterArea = document.getElementById('filterTasksArea');
+        if (filterArea) filterArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
     // Autenticación anónima
@@ -353,7 +355,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden card-hover">
                 <div class="p-4">
                     <div class="font-bold text-lg text-indigo-700">${escapeHtml(t.title)}</div>
-                    <div class="text-sm text-gray-500 mb-2">${t.area} · ${t.grade}</div>
+                    <div class="text-sm text-gray-500 mb-2">${t.area || 'Sin área'} · ${t.grade || 'Sin grado'}</div>
                     <p class="text-gray-600 text-sm mb-3">${escapeHtml(t.description?.substring(0, 100))}${t.description?.length > 100 ? '...' : ''}</p>
                     ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-flex items-center"><i class="fas fa-paperclip mr-1"></i> Archivo adjunto</a>` : ''}
                     ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm ml-3 inline-flex items-center"><i class="fas fa-link mr-1"></i> Enlace</a>` : ''}
@@ -400,7 +402,7 @@
             const exam = allExams.find(e => e.id === r.examId);
             return student?.grade === gradeFilter && exam?.area === areaFilter;
         });
-        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></tr>'; return; }
+        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></td>'; return; }
         tbody.innerHTML = filtered.map(r => {
             const student = allStudents.find(s => s.id === r.studentId);
             const studentName = student?.name || 'Desconocido';
@@ -493,7 +495,7 @@
         container.innerHTML = tasks.map(t => `
             <div class="bg-white rounded-xl shadow-sm border p-4 card-hover">
                 <div class="font-bold text-indigo-700">${escapeHtml(t.title)}</div>
-                <div class="text-sm text-gray-500">${t.area}</div>
+                <div class="text-sm text-gray-500">${t.area || 'Sin área'}</div>
                 <p class="text-gray-600 text-sm my-2">${escapeHtml(t.description?.substring(0, 100))}</p>
                 ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-block mb-2"><i class="fas fa-download"></i> Recurso guía</a>` : ''}
                 ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm inline-block ml-2"><i class="fas fa-external-link-alt"></i> Enlace</a>` : ''}
@@ -672,27 +674,54 @@
         };
     });
 
-    // Publicar tarea con archivo
+    // Publicar tarea (sin validaciones estrictas)
     document.getElementById('publishTask').onclick = async () => {
-        const title = document.getElementById('taskTitle').value;
+        const title = document.getElementById('taskTitle').value.trim();
+        if (!title) {
+            showToast("El título es obligatorio", "error");
+            return;
+        }
         const grade = document.getElementById('taskGrade').value;
         const area = document.getElementById('taskArea').value;
         const desc = document.getElementById('taskDesc').value;
         const file = document.getElementById('taskFile').files[0];
         const link = document.getElementById('taskLink').value;
-        if (!title || !grade || !area || !desc) return showToast("Complete título, grado, área y descripción");
-        let fileURL = null;
-        if (file) {
-            const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
-            fileURL = await getDownloadURL(storageRef);
+        
+        const btn = document.getElementById('publishTask');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Publicando...';
+        
+        try {
+            let fileURL = null;
+            if (file) {
+                const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`);
+                await uploadBytes(storageRef, file);
+                fileURL = await getDownloadURL(storageRef);
+            }
+            await addDoc(tasksRef, { 
+                title, 
+                grade: grade || null, 
+                area: area || null, 
+                description: desc || null, 
+                fileURL, 
+                link: link || null, 
+                createdAt: serverTimestamp() 
+            });
+            showToast("Tarea publicada correctamente", "success");
+            // Limpiar campos
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDesc').value = '';
+            document.getElementById('taskFile').value = '';
+            document.getElementById('taskLink').value = '';
+            document.getElementById('taskGrade').value = '';
+            document.getElementById('taskArea').value = '';
+        } catch (error) {
+            console.error(error);
+            showToast("Error al publicar tarea", "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = "Publicar Tarea";
         }
-        await addDoc(tasksRef, { title, grade, area, description: desc, fileURL, link, createdAt: serverTimestamp() });
-        showToast("Tarea publicada");
-        document.getElementById('taskTitle').value = '';
-        document.getElementById('taskDesc').value = '';
-        document.getElementById('taskFile').value = '';
-        document.getElementById('taskLink').value = '';
     };
 
     // Generar descripción de tarea con IA
