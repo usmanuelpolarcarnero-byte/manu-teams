@@ -9,19 +9,31 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body { font-family: 'Inter', system-ui, sans-serif; }
-        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .toast { position: fixed; bottom: 24px; right: 24px; background: #1f2937; color: white; padding: 12px 20px; border-radius: 12px; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 20px; border-radius: 12px; z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; display: flex; align-items: center; gap: 10px; color: white; font-weight: bold;}
         .toast.show { opacity: 1; }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
         .card-hover { transition: transform 0.2s; }
         .card-hover:hover { transform: translateY(-4px); }
-        .progress-bar { height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; margin-top: 8px; }
-        .progress-fill { width: 0%; height: 100%; background: #10b981; transition: width 0.3s; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-<div id="toast" class="toast"></div>
+<div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-3"></div>
+
+<div id="customConfirmModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[100] p-4 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+        <h3 id="confirmTitle" class="text-xl font-bold mb-2">Confirmación</h3>
+        <p id="confirmMessage" class="text-gray-600 mb-6"></p>
+        <div class="flex gap-3 justify-end">
+            <button id="confirmCancelBtn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition">Cancelar</button>
+            <button id="confirmOkBtn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Aceptar</button>
+        </div>
+    </div>
+</div>
 
 <div id="welcomeScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-blue-50">
     <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
@@ -30,17 +42,20 @@
         </div>
         <h1 class="text-3xl font-bold text-gray-800 mb-2">EduGestor IA</h1>
         <p class="text-gray-500 mb-6">Plataforma educativa con inteligencia artificial</p>
+        <div id="authLoading" class="hidden mb-4 text-indigo-600 font-bold"><i class="fas fa-spinner fa-spin"></i> Conectando al servidor...</div>
         <button id="teacherBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition mb-3">Acceso Docente</button>
         <button id="studentBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-xl transition">Acceso Estudiante</button>
+        <p class="text-xs text-gray-400 mt-6">🔐 Entorno seguro y colaborativo.</p>
     </div>
 </div>
 
 <div id="teacherModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
-        <h2 class="text-xl font-bold mb-4">Acceso Docente</h2>
+        <h2 class="text-xl font-bold mb-4"><i class="fas fa-lock text-indigo-600 mr-2"></i>Acceso Docente</h2>
         <input type="password" id="teacherPass" placeholder="Contraseña" class="w-full border p-3 rounded-lg mb-4">
-        <button id="loginTeacher" class="w-full bg-indigo-600 text-white py-2 rounded-lg">Ingresar</button>
-        <button id="closeTeacherModal" class="w-full text-gray-500 mt-2 text-sm">Cancelar</button>
+        <button id="loginTeacher" class="w-full bg-indigo-600 text-white py-2 rounded-lg font-bold">Ingresar</button>
+        <button id="closeTeacherModal" class="w-full text-gray-500 mt-2 text-sm font-bold">Cancelar</button>
+        <p class="text-xs text-center text-gray-400 mt-4">Demo: admin2026</p>
     </div>
 </div>
 
@@ -49,8 +64,8 @@
         <h2 class="text-xl font-bold mb-4">Selecciona tu grado</h2>
         <select id="studentGradeSelect" class="w-full border p-3 rounded-lg mb-3"></select>
         <select id="studentNameSelect" class="w-full border p-3 rounded-lg mb-4"></select>
-        <button id="enterStudent" class="w-full bg-emerald-600 text-white py-2 rounded-lg">Entrar</button>
-        <button id="closeStudentModal" class="w-full text-gray-500 mt-2 text-sm">Cancelar</button>
+        <button id="enterStudent" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Entrar</button>
+        <button id="closeStudentModal" class="w-full text-gray-500 mt-2 text-sm font-bold">Cancelar</button>
     </div>
 </div>
 
@@ -58,135 +73,220 @@
     <nav class="bg-white shadow-md border-b sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <h2 class="text-xl font-bold text-indigo-600"><i class="fas fa-chalkboard-teacher mr-2"></i>Panel Docente</h2>
-            <button id="logoutTeacherPanel" class="bg-red-500 text-white px-4 py-2 rounded-lg">Salir</button>
+            <button id="logoutTeacherPanel" class="bg-red-500 text-white px-4 py-2 rounded-lg font-bold"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
     </nav>
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="flex flex-wrap gap-2 border-b mb-6">
-            <button class="tab-btn active bg-indigo-600 text-white px-5 py-2 rounded-t-lg" data-tab="tasksTab">📝 Tareas</button>
-            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-tab="examsTab">📋 Exámenes</button>
-            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-tab="gradesTab">📊 Calificaciones</button>
-            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-tab="studentsTab">👥 Estudiantes</button>
+            <button class="tab-btn active bg-indigo-600 text-white px-5 py-2 rounded-t-lg font-bold" data-tab="tasksTab">📝 Tareas</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg font-bold" data-tab="examsTab">📋 Exámenes</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg font-bold" data-tab="gradesTab">📥 Entregas y Notas</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg font-bold" data-tab="studentsTab">👥 Estudiantes</button>
         </div>
+
         <div id="tasksTab" class="tab-content">
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-                <h3 class="text-lg font-bold mb-4"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea</h3>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea con IA</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="taskTitle" placeholder="Título (obligatorio)" class="border p-3 rounded-lg">
-                    <select id="taskGrade" class="border p-3 rounded-lg"><option value="">-- Grado (opcional) --</option></select>
-                    <select id="taskArea" class="border p-3 rounded-lg"><option value="">-- Área (opcional) --</option></select>
+                    <input type="text" id="taskTitle" placeholder="Título de la tarea" class="border p-3 rounded-lg bg-gray-50">
+                    <select id="taskGrade" class="border p-3 rounded-lg bg-gray-50"></select>
+                    <select id="taskArea" class="border p-3 rounded-lg bg-gray-50"></select>
                     <div class="flex gap-2">
-                        <textarea id="taskDesc" placeholder="Descripción (opcional)" class="border p-3 rounded-lg flex-1" rows="3"></textarea>
-                        <button id="generateTaskDesc" class="bg-purple-600 text-white px-4 rounded-lg"><i class="fas fa-magic"></i> Generar IA</button>
+                        <textarea id="taskDesc" placeholder="Escribe el tema y usa la IA para generar detalles..." class="border p-3 rounded-lg flex-1 bg-gray-50" rows="2"></textarea>
+                        <button id="generateTaskDesc" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg font-bold transition"><i class="fas fa-magic"></i> IA</button>
                     </div>
-                    <div class="md:col-span-2">
-                        <input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt,.jpg,.png" class="border p-2 rounded-lg w-full">
-                        <div id="uploadProgress" class="progress-bar hidden"><div class="progress-fill"></div></div>
+                    
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                            <label class="block text-xs font-bold text-indigo-700 mb-1"><i class="fas fa-file-upload"></i> Archivo Principal (Guía)</label>
+                            <input type="file" id="taskFile" class="text-sm w-full file:bg-white file:border-0 file:rounded file:px-3 file:py-1">
+                        </div>
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                            <label class="block text-xs font-bold text-emerald-700 mb-1"><i class="fas fa-file-invoice"></i> Material de Apoyo (Opcional)</label>
+                            <input type="file" id="taskExampleFile" class="text-sm w-full file:bg-white file:border-0 file:rounded file:px-3 file:py-1">
+                        </div>
                     </div>
-                    <input type="text" id="taskLink" placeholder="Enlace (YouTube, web)" class="border p-3 rounded-lg">
-                    <button id="publishTask" class="md:col-span-2 bg-indigo-600 text-white font-semibold py-3 rounded-lg">Publicar Tarea</button>
+                    
+                    <input type="text" id="taskLink" placeholder="Enlace complementario (YouTube, Web)" class="md:col-span-2 border p-3 rounded-lg bg-gray-50">
+                    <button id="publishTask" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition shadow">Publicar Tarea en el Aula</button>
                 </div>
             </div>
-            <div class="flex gap-3 mb-4">
-                <select id="filterTasksGrade" class="border p-2 rounded-lg"></select>
-                <select id="filterTasksArea" class="border p-2 rounded-lg"></select>
+            
+            <div class="flex gap-3 mb-4 bg-gray-100 p-3 rounded-lg">
+                <select id="filterTasksGrade" class="border p-2 rounded-lg flex-1"></select>
+                <select id="filterTasksArea" class="border p-2 rounded-lg flex-1"></select>
+                <button id="refreshTasksBtn" class="bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300"><i class="fas fa-sync-alt"></i></button>
             </div>
             <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
+
         <div id="examsTab" class="tab-content hidden">
-            <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
-                <h3 class="text-lg font-bold mb-4"><i class="fas fa-robot text-purple-500 mr-2"></i>Crear Examen</h3>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-robot text-purple-500 mr-2"></i>Generador de Exámenes</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <input type="text" id="examTitle" placeholder="Título" class="border p-3 rounded-lg">
-                    <select id="examGrade" class="border p-3 rounded-lg"></select>
-                    <select id="examArea" class="border p-3 rounded-lg"></select>
+                    <input type="text" id="examTitle" placeholder="Título" class="border p-3 rounded-lg bg-gray-50">
+                    <select id="examGrade" class="border p-3 rounded-lg bg-gray-50"></select>
+                    <select id="examArea" class="border p-3 rounded-lg bg-gray-50"></select>
                 </div>
                 <div class="flex flex-col md:flex-row gap-4 mb-4">
-                    <textarea id="examTopic" placeholder="Describe el tema para generar preguntas" class="border p-3 rounded-lg flex-1" rows="2"></textarea>
-                    <div class="bg-gray-50 p-3 rounded-lg flex items-center gap-2">
-                        <label class="font-semibold">Nº preguntas:</label>
-                        <input type="number" id="numQuestions" value="5" min="1" class="border p-2 rounded w-20">
-                        <button id="generateQuestions" class="bg-purple-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-bolt"></i> Generar IA</button>
+                    <textarea id="examTopic" placeholder="Describe detalladamente el tema para que la IA genere las preguntas..." class="border p-3 rounded-lg flex-1 bg-gray-50" rows="2"></textarea>
+                    <div class="bg-purple-50 p-3 rounded-lg flex items-center gap-3 border border-purple-200">
+                        <div>
+                            <label class="text-[10px] font-bold text-purple-700 block">Nº PREGUNTAS</label>
+                            <input type="number" id="numQuestions" value="10" min="1" max="30" class="border p-1 rounded w-16 text-center font-bold">
+                        </div>
+                        <button id="generateQuestions" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold h-full"><i class="fas fa-bolt"></i> Generar</button>
                     </div>
                 </div>
-                <div id="questionsEditor" class="space-y-3 mb-4 max-h-96 overflow-auto"></div>
-                <button id="publishExam" class="bg-emerald-600 text-white font-semibold py-3 rounded-lg w-full">Publicar Examen</button>
+                
+                <div id="questionsEditor" class="space-y-3 mb-4 max-h-96 overflow-auto bg-gray-50 p-4 rounded-lg border border-dashed hidden"></div>
+                
+                <div id="postExamGeneration" class="hidden mt-4 p-5 bg-emerald-50 rounded-xl border border-emerald-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-bold text-emerald-800 text-sm mb-2"><i class="fas fa-file-pdf"></i> 1. Cuestionario de Estudio</h4>
+                            <div class="flex gap-2">
+                                <button id="dlCuestionarioPdf" class="flex-1 bg-white border border-emerald-300 text-emerald-700 py-2 rounded font-bold hover:bg-emerald-100 transition">PDF</button>
+                                <button id="sendCuestionarioWa" class="flex-1 bg-green-500 text-white py-2 rounded font-bold hover:bg-green-600 transition">WhatsApp</button>
+                            </div>
+                        </div>
+                        <div class="border-l border-emerald-200 pl-6">
+                            <h4 class="font-bold text-emerald-800 text-sm mb-2"><i class="fas fa-laptop"></i> 2. Publicar Examen Final</h4>
+                            <div class="flex gap-2 items-center">
+                                <input type="number" id="numQuestionsExam" value="5" min="1" class="border p-2 rounded w-20 text-center font-bold">
+                                <button id="publishExam" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded transition">Publicar al Aula</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 mb-4 bg-gray-100 p-3 rounded-lg">
+                <select id="filterExamsGrade" class="border p-2 rounded-lg flex-1"></select>
+                <select id="filterExamsArea" class="border p-2 rounded-lg flex-1"></select>
+                <button id="refreshExamsBtn" class="bg-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300"><i class="fas fa-sync-alt"></i></button>
             </div>
             <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
+
         <div id="gradesTab" class="tab-content hidden">
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                    <select id="filterGrade" class="border p-2 rounded-lg flex-1"></select>
-                    <select id="filterArea" class="border p-2 rounded-lg flex-1"></select>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-200">
+                <h3 class="text-xl font-bold mb-4 text-indigo-700"><i class="fas fa-inbox mr-2"></i>Bandeja de Tareas Entregadas</h3>
+                <div class="flex gap-4 mb-4 bg-gray-50 p-3 rounded-lg border">
+                    <select id="filterSubsGrade" class="border p-2 rounded-lg flex-1"></select>
+                    <select id="filterSubsArea" class="border p-2 rounded-lg flex-1"></select>
+                    <button id="refreshSubsBtn" class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"><i class="fas fa-sync-alt"></i></button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full border-collapse">
-                        <thead><tr class="bg-gray-100 border-b"><th class="p-3">Estudiante</th><th>Examen</th><th>Nota</th><th>WhatsApp</th><th>Fecha</th></tr></thead>
+                <div id="submissionsList" class="space-y-3"></div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h3 class="text-xl font-bold mb-4 text-emerald-600"><i class="fas fa-chart-bar mr-2"></i>Registro de Calificaciones (Exámenes)</h3>
+                <div class="flex flex-col sm:flex-row gap-4 mb-4 bg-emerald-50 p-3 rounded-lg border border-emerald-100">
+                    <select id="filterGrade" class="border p-2 rounded-lg flex-1 font-bold text-gray-700"></select>
+                    <select id="filterArea" class="border p-2 rounded-lg flex-1 font-bold text-gray-700"></select>
+                    <button id="refreshGradesBtn" class="bg-gray-200 px-4 py-2 rounded-lg hover:bg-gray-300"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div class="overflow-x-auto rounded-lg border">
+                    <table class="w-full border-collapse bg-white text-left">
+                        <thead><tr class="bg-gray-100 text-gray-600 text-sm"><th class="p-3 border-b">Estudiante</th><th class="p-3 border-b">Examen</th><th class="p-3 border-b text-center">Nota</th><th class="p-3 border-b text-center">Acciones</th><th class="p-3 border-b text-right">Fecha</th></tr></thead>
                         <tbody id="gradesTableBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
+
         <div id="studentsTab" class="tab-content hidden">
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <h3 class="text-lg font-bold mb-4">Agregar estudiante</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                    <input type="text" id="newStudentName" placeholder="Apellidos y nombres" class="border p-3 rounded-lg">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
+                <h3 class="text-lg font-bold mb-4"><i class="fas fa-user-plus text-indigo-500 mr-2"></i>Agregar estudiante manualmente</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6 bg-gray-50 p-4 rounded-xl border">
+                    <input type="text" id="newStudentName" placeholder="Apellidos y nombres" class="border p-3 rounded-lg md:col-span-2">
                     <select id="newStudentGrade" class="border p-3 rounded-lg"></select>
-                    <input type="text" id="newStudentPhone" placeholder="Teléfono" class="border p-3 rounded-lg">
-                    <button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar</button>
+                    <button id="addStudent" class="bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition">Guardar</button>
                 </div>
-                <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-4"></select>
-                <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                
+                <h3 class="text-lg font-bold mb-4 border-t pt-6"><i class="fas fa-users text-emerald-500 mr-2"></i>Directorio Completo</h3>
+                <div class="flex gap-2">
+                    <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-4 bg-emerald-50 font-bold text-emerald-800"></select>
+                    <button id="refreshStudentsBtn" class="bg-gray-200 px-4 py-2 rounded-lg mb-4 hover:bg-gray-300"><i class="fas fa-sync-alt"></i></button>
+                </div>
+                <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"></div>
             </div>
         </div>
     </div>
 </div>
 
 <div id="studentPanel" class="hidden min-h-screen bg-gray-50">
-    <nav class="bg-white shadow-md border-b sticky top-0">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div><span id="studentNameSpan" class="font-bold"></span> - <span id="studentGradeSpan" class="text-sm text-gray-500"></span></div>
-            <button id="logoutStudentPanel" class="bg-red-500 text-white px-4 py-2 rounded-lg">Salir</button>
+    <nav class="bg-emerald-600 shadow-md border-b sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center text-white">
+            <div>
+                <h2 id="studentNameSpan" class="text-xl font-bold"></h2>
+                <span id="studentGradeSpan" class="text-sm text-emerald-100"></span>
+            </div>
+            <button id="logoutStudentPanel" class="bg-emerald-800 hover:bg-red-500 font-bold px-4 py-2 rounded-lg transition"><i class="fas fa-sign-out-alt"></i> Salir</button>
         </div>
     </nav>
     <div class="max-w-7xl mx-auto px-4 py-6">
         <div class="flex flex-wrap gap-2 border-b mb-6">
-            <button class="student-tab-btn active bg-emerald-600 text-white px-5 py-2 rounded-t-lg" data-stab="studentTasksTab">📚 Mis Tareas</button>
-            <button class="student-tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-stab="studentExamsTab">📝 Evaluaciones</button>
-            <button class="student-tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-stab="studentGradesTab">⭐ Calificaciones</button>
+            <button class="student-tab-btn active bg-emerald-600 text-white px-6 py-3 rounded-t-lg font-bold" data-stab="studentTasksTab">📚 Mis Tareas</button>
+            <button class="student-tab-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-t-lg font-bold" data-stab="studentExamsTab">📝 Exámenes</button>
+            <button class="student-tab-btn bg-gray-200 text-gray-700 px-6 py-3 rounded-t-lg font-bold" data-stab="studentGradesTab">⭐ Mis Notas</button>
         </div>
-        <div id="studentTasksTab" class="student-tab-content"><div id="studentTasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
-        <div id="studentExamsTab" class="student-tab-content hidden"><div id="studentExamsList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></div>
-        <div id="studentGradesTab" class="student-tab-content hidden"><div id="studentGradesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
+
+        <div id="studentTasksTab" class="student-tab-content">
+            <div class="flex justify-end mb-3">
+                <button id="refreshStudentTasks" class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50"><i class="fas fa-sync-alt"></i> Actualizar</button>
+            </div>
+            <div id="studentTasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+        <div id="studentExamsTab" class="student-tab-content hidden">
+            <div class="flex justify-end mb-3">
+                <button id="refreshStudentExams" class="bg-white border border-gray-300 text-gray-700 px-3 py-1 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50"><i class="fas fa-sync-alt"></i> Actualizar</button>
+            </div>
+            <div id="studentExamsList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+        </div>
+        <div id="studentGradesTab" class="student-tab-content hidden">
+            <div id="studentGradesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
     </div>
 </div>
 
-<div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
-        <h2 id="examTakeTitle" class="text-xl font-bold mb-4"></h2>
-        <div id="examTakeQuestions"></div>
-        <div class="flex justify-end gap-3 mt-6">
-            <button id="cancelExam" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button>
-            <button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar</button>
+<div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto backdrop-blur-sm">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+        <div class="p-6 border-b flex justify-between items-center bg-indigo-50 rounded-t-2xl">
+            <h2 id="examTakeTitle" class="text-xl font-bold text-indigo-900"></h2>
+            <div class="bg-white px-4 py-2 rounded-lg shadow font-mono text-red-600 font-bold border"><i class="fas fa-clock"></i> <span id="timer">30:00</span></div>
+        </div>
+        <div id="examTakeQuestions" class="p-6 overflow-y-auto flex-1 space-y-6"></div>
+        <div class="p-4 border-t flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
+            <button id="cancelExam" class="bg-gray-300 px-6 py-2 rounded-lg font-bold hover:bg-gray-400">Abandonar</button>
+            <button id="submitExamBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-2 rounded-lg font-bold shadow-md transition">Terminar Examen</button>
         </div>
     </div>
 </div>
-<div id="viewAnswersModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
-    <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
-        <h2 id="viewAnswersTitle" class="text-xl font-bold mb-4"></h2>
-        <div id="viewAnswersContent"></div>
-        <button id="closeAnswersModal" class="bg-gray-500 text-white px-4 py-2 rounded-lg mt-4">Cerrar</button>
+
+<div id="viewAnswersModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto backdrop-blur-sm">
+    <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+        <div class="p-6 border-b flex justify-between items-center bg-blue-50 rounded-t-2xl">
+            <h2 id="viewAnswersTitle" class="text-xl font-bold text-blue-900"></h2>
+            <button id="closeAnswersModal" class="text-gray-500 hover:text-red-500 transition"><i class="fas fa-times text-2xl"></i></button>
+        </div>
+        <div id="viewAnswersContent" class="p-6 overflow-y-auto flex-1 space-y-4"></div>
+        <div class="p-4 border-t flex justify-end bg-gray-50 rounded-b-2xl">
+            <button id="closeAnswersModalBtn" class="bg-gray-300 hover:bg-gray-400 px-6 py-2 rounded-lg font-bold">Cerrar</button>
+        </div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
+    // ---------------------------------------------------------
+    // 1. CONFIGURACIÓN FIREBASE
+    // ---------------------------------------------------------
     const firebaseConfig = {
         apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
         authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -195,200 +295,721 @@
         messagingSenderId: "701752375464",
         appId: "1:701752375464:web:eaab256668b869d026aa9d"
     };
+    
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
     const storage = getStorage(app);
+    
+    const appId = "edugestor-v1"; // Aislamos datos para no cruzar con otras apps en la misma BD
+
+    const studentsRef = collection(db, `artifacts/${appId}/students`);
+    const tasksRef = collection(db, `artifacts/${appId}/tasks`);
+    const examsRef = collection(db, `artifacts/${appId}/exams`);
+    const submissionsRef = collection(db, `artifacts/${appId}/submissions`);
+    const resultsRef = collection(db, `artifacts/${appId}/examResults`);
+
     const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
+    let currentUserAuth = null, currentStudent = null, examTimerInterval = null;
+    let allStudents = [], allTasks = [], allExams = [], allResults = [], allSubs = [];
 
-    const studentsRef = collection(db, 'students');
-    const tasksRef = collection(db, 'tasks');
-    const examsRef = collection(db, 'exams');
-    const submissionsRef = collection(db, 'submissions');
-    const resultsRef = collection(db, 'examResults');
-
-    let currentUser = null, currentStudent = null;
-    let allStudents = [], allTasks = [], allExams = [], allResults = [];
-
+    // ---------------------------------------------------------
+    // 2. UTILIDADES UI
+    // ---------------------------------------------------------
     function showToast(msg, type='info') {
-        const toast = document.getElementById('toast');
-        toast.textContent = msg;
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const t = document.createElement('div');
+        t.className = `toast toast-${type} shadow-lg`;
+        t.innerHTML = `<i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'} text-xl"></i><span>${msg}</span>`;
+        container.appendChild(t);
+        setTimeout(() => t.classList.add('show'), 10);
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
     }
 
+    function showConfirm(msg, onOk, title="Confirmación") {
+        const m = document.getElementById('customConfirmModal');
+        if (!m) return;
+        document.getElementById('confirmTitle').innerText = title;
+        document.getElementById('confirmMessage').innerText = msg;
+        m.classList.remove('hidden'); m.classList.add('flex');
+        
+        const ok = document.getElementById('confirmOkBtn'), cancel = document.getElementById('confirmCancelBtn');
+        const newOk = ok.cloneNode(true), newCancel = cancel.cloneNode(true);
+        ok.parentNode.replaceChild(newOk, ok); cancel.parentNode.replaceChild(newCancel, cancel);
+        
+        newCancel.onclick = () => { m.classList.add('hidden'); m.classList.remove('flex'); };
+        newOk.onclick = () => { m.classList.add('hidden'); m.classList.remove('flex'); onOk(); };
+    }
+
+    function escapeHtml(s) { return s ? s.toString().replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;') : ''; }
+    function cleanFileName(str) { return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.]/g, '_'); }
+
+    // ---------------------------------------------------------
+    // 3. INICIALIZACIÓN Y DATA
+    // ---------------------------------------------------------
     const allGrades = ["PRIMERO DE PRIMARIA","SEGUNDO DE PRIMARIA","TERCERO DE PRIMARIA","CUARTO DE PRIMARIA","QUINTO DE PRIMARIA","SEXTO DE PRIMARIA","PRIMERO DE SECUNDARIA","SEGUNDO DE SECUNDARIA","TERCERO DE SECUNDARIA","CUARTO DE SECUNDARIA","QUINTO DE SECUNDARIA"];
     const allAreas = ["Matemáticas","Comunicación","Ciencias Sociales","Ciencia y Tecnología","Personal Social","Inglés","Arte y Cultura","Educación Física","Computación","Educación Religiosa","Tutoría","EPT"];
 
     function populateSelects() {
-        const selects = ['taskGrade', 'examGrade', 'newStudentGrade', 'filterStudentsGrade', 'filterGrade', 'studentGradeSelect'];
-        selects.forEach(id => {
+        ["taskGrade","examGrade","newStudentGrade","studentGradeSelect","filterStudentsGrade","filterTasksGrade","filterExamsGrade","filterGrade","filterSubsGrade"].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.innerHTML = '<option value="">-- Seleccionar --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+            if(el) el.innerHTML = '<option value="">-- Grado --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
         });
-        const areaSelects = ['taskArea', 'examArea', 'filterArea'];
-        areaSelects.forEach(id => {
+        ["taskArea","examArea","filterTasksArea","filterExamsArea","filterArea","filterSubsArea"].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.innerHTML = '<option value="">-- Seleccionar --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
+            if(el) el.innerHTML = '<option value="">-- Área --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
         });
-        const filterGrade = document.getElementById('filterTasksGrade');
-        if (filterGrade) filterGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
-        const filterArea = document.getElementById('filterTasksArea');
-        if (filterArea) filterArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
-    signInAnonymously(auth).catch(e => console.error(e));
-    onAuthStateChanged(auth, user => { currentUser = user; if (user) seedStudents(); });
-
-    const studentsDirectory = [ /* ... tus 407 estudiantes ... */ ];
-    async function seedStudents() {
-        const snap = await getDocs(studentsRef);
-        if (snap.empty) {
-            for (const s of studentsDirectory) {
-                await addDoc(studentsRef, { name: s.name, grade: s.grade, phones: s.phones });
-            }
-            showToast("Directorio de estudiantes cargado", "success");
-        }
-    }
-
-    function loadData() {
-        onSnapshot(studentsRef, snap => { allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderStudentsList(); renderGradesTable(); });
-        onSnapshot(tasksRef, snap => { allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasksList(); });
-        onSnapshot(examsRef, snap => { allExams = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderExamsList(); });
-        onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
-    }
-
-    // ==================== FUNCIONES DE WHATSAPP ====================
-    const PROFESOR_PHONE = "51985341634";
-    const CALLMEBOT_APIKEY = "8249510";
-    async function notificarProfesor(mensaje) {
+    async function initAuth() {
         try {
-            const url = `https://api.callmebot.com/whatsapp.php?phone=${PROFESOR_PHONE}&text=${encodeURIComponent(mensaje)}&apikey=${CALLMEBOT_APIKEY}`;
-            await fetch(url);
-            console.log("Notificación enviada al profesor");
-            return true;
-        } catch (error) {
-            console.error("Error al enviar notificación:", error);
-            return false;
+            document.getElementById('authLoading').classList.remove('hidden');
+            await signInAnonymously(auth);
+        } catch(e) {
+            showToast("No se pudo conectar a Firebase. Revisa tu conexión.", "error");
+        } finally {
+            document.getElementById('authLoading').classList.add('hidden');
         }
     }
-    async function notificarProfesorConNumeroPadre(numeroPadre, estudianteNombre, evento, detalles) {
-        const mensaje = `📱 NOTIFICACIÓN PADRE\n\nEstudiante: ${estudianteNombre}\nEvento: ${evento}\n${detalles}\n\n📞 Número del padre: ${numeroPadre}\n(Copia este número y pégalo en WhatsApp para contactarlo)`;
-        await notificarProfesor(mensaje);
+    
+    onAuthStateChanged(auth, user => { currentUserAuth = user; });
+    
+    const studentsDirectory = [
+        { name: "BATALLANOS SACSI, Flor de Liz", grade: "PRIMERO DE PRIMARIA", phones: ["918274035"] },
+        { name: "CCANCHILLO TORRES, Mayté Shantal", grade: "PRIMERO DE PRIMARIA", phones: ["927620188"] },
+        { name: "CHIPA PAUCCARA Ariana Crystell", grade: "PRIMERO DE PRIMARIA", phones: ["918441974"] },
+        { name: "GAMARRA OCSA Gael Valentino", grade: "PRIMERO DE PRIMARIA", phones: ["955561434"] },
+        { name: "HUAMAN CRUZ Danna Celeste", grade: "PRIMERO DE PRIMARIA", phones: ["923089267"] },
+        { name: "HUAMANI CHUPA, Sebastián Ludwing", grade: "PRIMERO DE PRIMARIA", phones: ["957502760"] },
+        { name: "HUILLCA CONDO, Cristian David", grade: "PRIMERO DE PRIMARIA", phones: ["910489320"] },
+        { name: "MALLCO LOPEZ, Aitana Alessandra", grade: "PRIMERO DE PRIMARIA", phones: ["950809100"] },
+        { name: "OSORIO IMATA, Lian Stheven", grade: "PRIMERO DE PRIMARIA", phones: ["954169049"] },
+        { name: "PAUCCAR AMANQUI Karely", grade: "PRIMERO DE PRIMARIA", phones: ["921009427"] },
+        { name: "ROMERO INCACUTIPA, Gael Widmar", grade: "PRIMERO DE PRIMARIA", phones: ["983386950"] },
+        { name: "TICLLAHUANACO HUILLCA Alexa Meritshe", grade: "PRIMERO DE PRIMARIA", phones: ["929472305"] },
+        { name: "VARGAS MENDOZA, Héctor Adriano", grade: "PRIMERO DE PRIMARIA", phones: ["940003927"] },
+        { name: "BOLIVAR HILARIO, Jazmin Elisa", grade: "SEGUNDO DE PRIMARIA", phones: ["914051165"] },
+        { name: "GASPAR VIZCARDO, Alessandro José", grade: "SEGUNDO DE PRIMARIA", phones: ["966326749"] },
+        { name: "HUITTOCCOLLO HUARACCONE, Tania", grade: "SEGUNDO DE PRIMARIA", phones: ["988715442"] },
+        { name: "LOZANO COAQUIRA, Jerry Matt Arnold", grade: "SEGUNDO DE PRIMARIA", phones: ["943567067"] },
+        { name: "MACHACA VELARDE Lucas Nathan", grade: "SEGUNDO DE PRIMARIA", phones: ["979334460"] },
+        { name: "MAMANI VILLAFUERTE, Estrellita Luz Celeste", grade: "SEGUNDO DE PRIMARIA", phones: ["993067740"] },
+        { name: "MESCCO OLMEDA, Lucia Camila", grade: "SEGUNDO DE PRIMARIA", phones: ["929468772"] },
+        { name: "MIRAMIRA GUTIERREZ Emily Valeria", grade: "SEGUNDO DE PRIMARIA", phones: ["946784418"] },
+        { name: "MOLLEAPAZA VALERIANO, Isabella Romina", grade: "SEGUNDO DE PRIMARIA", phones: ["941296941"] },
+        { name: "MONTEZA FLORIAN, Jheyli Katherine", grade: "SEGUNDO DE PRIMARIA", phones: ["935246035"] },
+        { name: "MOROCHARA HUACCHA, Arthur Dylan", grade: "SEGUNDO DE PRIMARIA", phones: ["942578995"] },
+        { name: "PUERTAS AGUILAR Kalet Gael", grade: "SEGUNDO DE PRIMARIA", phones: ["921360554"] },
+        { name: "QUISPE MARIN, Stefano Fabián", grade: "SEGUNDO DE PRIMARIA", phones: ["988184462"] },
+        { name: "RAMOS QUISPE Keren Hapuc Milca", grade: "SEGUNDO DE PRIMARIA", phones: ["992615525"] },
+        { name: "RAMOS TICONA, Liam Caleb", grade: "SEGUNDO DE PRIMARIA", phones: ["955592040"] },
+        { name: "ARUCUTIPA ROMERO Karen Alondra", grade: "TERCERO DE PRIMARIA", phones: ["926547253"] },
+        { name: "ARUCUTIPA ROMERO Shirley Alondra", grade: "TERCERO DE PRIMARIA", phones: ["926547253"] },
+        { name: "CASTILLO FLORES, Micaela Nihan", grade: "TERCERO DE PRIMARIA", phones: ["947567117"] },
+        { name: "CCANAHUIRE PFOCCORI, Liam Yordano", grade: "TERCERO DE PRIMARIA", phones: ["991285207"] },
+        { name: "CHAMBI CHAMBI Lucy Kristel", grade: "TERCERO DE PRIMARIA", phones: ["971338674"] },
+        { name: "CONDORI JORDAN Britney Brisayda Leyka", grade: "TERCERO DE PRIMARIA", phones: ["917402117"] },
+        { name: "DIAZ CAPACOILA, Greissy Camila", grade: "TERCERO DE PRIMARIA", phones: ["913678612"] },
+        { name: "GUZMAN CCAMA Dorud Emir", grade: "TERCERO DE PRIMARIA", phones: ["923922422"] },
+        { name: "HUAMAN CRUZ Sefora Lady", grade: "TERCERO DE PRIMARIA", phones: ["923089267"] },
+        { name: "HUAMANI HUALLA Sofía Guadalupe", grade: "TERCERO DE PRIMARIA", phones: ["974048043"] },
+        { name: "MAMANI APAZA Leonard Josías", grade: "TERCERO DE PRIMARIA", phones: ["937103337"] },
+        { name: "MERMA COLUNCHE Natali Brissette", grade: "TERCERO DE PRIMARIA", phones: ["910091187"] },
+        { name: "MONTEZA RIVAS Geral Mihael", grade: "TERCERO DE PRIMARIA", phones: ["941272996"] },
+        { name: "OCSA LLANQUIRE Thiago Hernán", grade: "TERCERO DE PRIMARIA", phones: ["922672041"] },
+        { name: "ORTEGA QUISPE Kaleb Richard", grade: "TERCERO DE PRIMARIA", phones: ["929140120"] },
+        { name: "PONCE CARDENAS Lía Antonella", grade: "TERCERO DE PRIMARIA", phones: ["986467583"] },
+        { name: "QUISPE QUISPE José Abrahan", grade: "TERCERO DE PRIMARIA", phones: ["938827213"] },
+        { name: "SACSI QUISPE Yelina Maite", grade: "TERCERO DE PRIMARIA", phones: ["964325974"] },
+        { name: "SALAZAR PEREZ, Juan David", grade: "TERCERO DE PRIMARIA", phones: ["947815908"] },
+        { name: "TAIPE DE LA CRUZ Vasthy Andrea", grade: "TERCERO DE PRIMARIA", phones: ["977370060"] },
+        { name: "VILLAFUERTE TICONA Luis Ángel", grade: "TERCERO DE PRIMARIA", phones: ["988705935"] },
+        { name: "AMANQUI YANARICO, Ana Divora", grade: "CUARTO DE PRIMARIA", phones: ["921009427"] },
+        { name: "APAZA PAUCCARA Miguel Axel", grade: "CUARTO DE PRIMARIA", phones: ["910347090"] },
+        { name: "CALCINA MURILLO, Thiago Jhunior", grade: "CUARTO DE PRIMARIA", phones: ["901838237"] },
+        { name: "CCANCHILLO TORRES, Jesús Franko", grade: "CUARTO DE PRIMARIA", phones: ["927620188"] },
+        { name: "CHAMBI VILCA Nikol Abigail", grade: "CUARTO DE PRIMARIA", phones: ["963160198"] },
+        { name: "CONDORI QUISPE, Raquel Amira", grade: "CUARTO DE PRIMARIA", phones: ["988438892"] },
+        { name: "DE LA CRUZ ALTAMIRANO Juan Felipe", grade: "CUARTO DE PRIMARIA", phones: ["915943265"] },
+        { name: "HUITTOCCOLLO HUARACCONE, Jhans Roly", grade: "CUARTO DE PRIMARIA", phones: ["988715442"] },
+        { name: "MAMANI QUISPE, Dayana Nicol", grade: "CUARTO DE PRIMARIA", phones: ["914952914"] },
+        { name: "MAMANI QUISPE, Shirley Abigail", grade: "CUARTO DE PRIMARIA", phones: ["914952914"] },
+        { name: "MAMANI RAMOS, Lesly Abigail", grade: "CUARTO DE PRIMARIA", phones: ["983812022"] },
+        { name: "MAQUERA ROMERO, Esteyci Alejandra", grade: "CUARTO DE PRIMARIA", phones: ["968736817"] },
+        { name: "MELENDEZ PEÑAFIEL, Alberth Dayiro", grade: "CUARTO DE PRIMARIA", phones: ["957864437"] },
+        { name: "MELENDEZ PEÑAFIEL, Moisés Leonel", grade: "CUARTO DE PRIMARIA", phones: ["957864437"] },
+        { name: "MOLLEAPAZA VALERIANO, Evangeline Samara", grade: "CUARTO DE PRIMARIA", phones: ["941296941"] },
+        { name: "OSORIO IMATA, Keyla Grisel", grade: "CUARTO DE PRIMARIA", phones: ["954169049"] },
+        { name: "PACCO LOPE, Lionard Griezmann", grade: "CUARTO DE PRIMARIA", phones: ["940569776"] },
+        { name: "QUISPE CAMALA, José Manuel", grade: "CUARTO DE PRIMARIA", phones: ["901643065"] },
+        { name: "QUISPE CAMALA, Juan Manuel", grade: "CUARTO DE PRIMARIA", phones: ["901643065"] },
+        { name: "QUISPE CAYLLAHUA Lya Shanara", grade: "CUARTO DE PRIMARIA", phones: ["924831434"] },
+        { name: "QUISPE CHAUPI, Misael Matías", grade: "CUARTO DE PRIMARIA", phones: ["916210270"] },
+        { name: "ANCCALLE MERMA, Jesús", grade: "QUINTO DE PRIMARIA", phones: ["947450044"] },
+        { name: "CHOQUENAIRA PONTECIL, Neymar Felix", grade: "QUINTO DE PRIMARIA", phones: ["984493705"] },
+        { name: "GUZMAN SEVILLANO, Sebastián Lian", grade: "QUINTO DE PRIMARIA", phones: ["944340046"] },
+        { name: "HUANCA MAMANI, Aurora Samay", grade: "QUINTO DE PRIMARIA", phones: ["979801535"] },
+        { name: "MAMANI PAUCCAR, Zaza Jeison", grade: "QUINTO DE PRIMARIA", phones: ["987429615"] },
+        { name: "MERMA COLUNCHE Danitza Margot", grade: "QUINTO DE PRIMARIA", phones: ["910091187"] },
+        { name: "PHALA TORRES, Israel José", grade: "QUINTO DE PRIMARIA", phones: ["955667251"] },
+        { name: "QUISPE HUAMANI, Angie Madeley", grade: "QUINTO DE PRIMARIA", phones: ["959367926"] },
+        { name: "QUISPE QUISPE, Luz Kiara", grade: "QUINTO DE PRIMARIA", phones: ["958063865"] },
+        { name: "VALDEZ SUNI, Evelin Adaluz", grade: "QUINTO DE PRIMARIA", phones: ["967633513"] },
+        { name: "YAULI QUISPE, Zebasthian Luis", grade: "QUINTO DE PRIMARIA", phones: ["939699700"] },
+        { name: "ANCASI VILLAFUERTE, Andrea Edith", grade: "SEXTO DE PRIMARIA", phones: ["993067740"] },
+        { name: "APAZA MAMANI Mateo Jacob", grade: "SEXTO DE PRIMARIA", phones: ["956343977"] },
+        { name: "BATALLANOS SALHUA Alía Luz", grade: "SEXTO DE PRIMARIA", phones: ["954364096"] },
+        { name: "BELÓN AQUINO Joaquín Jhared", grade: "SEXTO DE PRIMARIA", phones: ["945472154"] },
+        { name: "CAPRISTANO AYNAYA Yamilett Lucero", grade: "SEXTO DE PRIMARIA", phones: ["964657262"] },
+        { name: "CHORA COAQUIRA Thiago Mateo", grade: "SEXTO DE PRIMARIA", phones: ["981936821"] },
+        { name: "GUZMAN CCAMA Sebastián Rodrigo", grade: "SEXTO DE PRIMARIA", phones: ["923922422"] },
+        { name: "HUAMAN CHOQUE Neyson Orlando", grade: "SEXTO DE PRIMARIA", phones: ["923301369"] },
+        { name: "HUITTOCCOLLO HUARACCONE Leydi Nicol", grade: "SEXTO DE PRIMARIA", phones: ["988715442"] },
+        { name: "LAURA SUPA Heber Antony", grade: "SEXTO DE PRIMARIA", phones: ["977737444"] },
+        { name: "LIZARRAGA TICONA Dylan Caled", grade: "SEXTO DE PRIMARIA", phones: ["988705935"] },
+        { name: "MACHUCA CRUZ Ghislaine", grade: "SEXTO DE PRIMARIA", phones: ["945624107"] },
+        { name: "MANCHA COAQUIRA Wilmar Junior", grade: "SEXTO DE PRIMARIA", phones: ["920178101"] },
+        { name: "MIRAMIRA GUTIERREZ Elías Samuel", grade: "SEXTO DE PRIMARIA", phones: ["946784418"] },
+        { name: "OCSA LLANQUIRE Brianna Jazmin", grade: "SEXTO DE PRIMARIA", phones: ["922672041"] },
+        { name: "PACCO LOPE Naydelyn Candy", grade: "SEXTO DE PRIMARIA", phones: ["940569776"] },
+        { name: "PUERTAS AGUILAR Samai Sumac Tika", grade: "SEXTO DE PRIMARIA", phones: ["921360554"] },
+        { name: "QUISPE MARAS Eimy Alondra", grade: "SEXTO DE PRIMARIA", phones: ["976470221"] },
+        { name: "QUISPE QUISPE Eduard Sebastián", grade: "SEXTO DE PRIMARIA", phones: ["917655889"] },
+        { name: "RUIZ TITO Arjen Brenner", grade: "SEXTO DE PRIMARIA", phones: ["959392939"] },
+        { name: "SACSI QUISPE Romina Yamilet", grade: "SEXTO DE PRIMARIA", phones: ["964325974"] },
+        { name: "TAIPE DE LA CRUZ Nerina Beverly", grade: "SEXTO DE PRIMARIA", phones: ["977370060"] },
+        { name: "YNOFUENTE CANAHUIRI Sheyla Nicole", grade: "SEXTO DE PRIMARIA", phones: ["934293517"] },
+        { name: "YUCRA SULLA Ian Luis Eidan", grade: "SEXTO DE PRIMARIA", phones: ["957969746"] },
+        { name: "BARRIONUEVO CASTRO, Jeyko Paul", grade: "PRIMERO DE SECUNDARIA", phones: ["950437739"] },
+        { name: "BRINGAS JUAREZ, Bryams Jhamilth", grade: "PRIMERO DE SECUNDARIA", phones: ["916377365"] },
+        { name: "BUSTAMANTE CARRASCO Edwin", grade: "PRIMERO DE SECUNDARIA", phones: ["935377870"] },
+        { name: "CALDERON CARDENAS, Kiara Samira", grade: "PRIMERO DE SECUNDARIA", phones: ["986467583"] },
+        { name: "CAMI VILLAVICENCIO, Yhojan Yoset", grade: "PRIMERO DE SECUNDARIA", phones: ["977115367"] },
+        { name: "DE LA CRUZ CONDORI, Jorvic Steeven", grade: "PRIMERO DE SECUNDARIA", phones: ["952705197"] },
+        { name: "GASPAR VIZCARDO, Randy Oscar", grade: "PRIMERO DE SECUNDARIA", phones: ["966326749"] },
+        { name: "LLANQUE ALMIRON, Hassiel Brigitte", grade: "PRIMERO DE SECUNDARIA", phones: ["958005914"] },
+        { name: "MANCHA MAMANI, Yidda Abigail", grade: "PRIMERO DE SECUNDARIA", phones: ["963883509"] },
+        { name: "MANCHA ROJAS, Dheivy Maycol", grade: "PRIMERO DE SECUNDARIA", phones: ["923242362"] },
+        { name: "MERMA COLUNCHE Paola Katerine", grade: "PRIMERO DE SECUNDARIA", phones: ["910091187"] },
+        { name: "OSORIO IMATA, Liz Esperanza", grade: "PRIMERO DE SECUNDARIA", phones: ["954169049"] },
+        { name: "PALOMINO REYES, Naomi Eliana", grade: "PRIMERO DE SECUNDARIA", phones: ["933622529"] },
+        { name: "PEÑA ARANIBAR, Rihana Franshesca", grade: "PRIMERO DE SECUNDARIA", phones: ["959885130"] },
+        { name: "QUISPE CAMALA, Ana Gabriela", grade: "PRIMERO DE SECUNDARIA", phones: ["901643065"] },
+        { name: "SANTILLAN SANCHEZ, Cristhoper Luis Ángel", grade: "PRIMERO DE SECUNDARIA", phones: ["978745841"] },
+        { name: "VARGAS CHOQUE, Patrick Rodrigo", grade: "PRIMERO DE SECUNDARIA", phones: ["992630638"] },
+        { name: "YAULI QUISPE, Juan Diego", grade: "PRIMERO DE SECUNDARIA", phones: ["939699700"] },
+        { name: "ZEA HERRERA Xavier Alonso", grade: "PRIMERO DE SECUNDARIA", phones: ["958930492"] },
+        { name: "ARUCUTIPA CALISAYA Yuliet Luanna", grade: "SEGUNDO DE SECUNDARIA", phones: ["921016801"] },
+        { name: "CISA SAHUANAY Miguel Ángel", grade: "SEGUNDO DE SECUNDARIA", phones: ["983130949"] },
+        { name: "COLQUE CHAMBI Jhems Kevin", grade: "SEGUNDO DE SECUNDARIA", phones: ["943972979"] },
+        { name: "CUYO CHOQUE Will Adriano", grade: "SEGUNDO DE SECUNDARIA", phones: ["968048098"] },
+        { name: "GALLEGOS ZEA, James Jamir", grade: "SEGUNDO DE SECUNDARIA", phones: ["902272625"] },
+        { name: "MENDOZA MAMANI, Víctor Manuel", grade: "SEGUNDO DE SECUNDARIA", phones: ["989621515"] },
+        { name: "MONTEZA RIVAS Yair Alexander", grade: "SEGUNDO DE SECUNDARIA", phones: ["941272996"] },
+        { name: "SANGUINO MARQUEZ Carlos Santiago", grade: "SEGUNDO DE SECUNDARIA", phones: ["921998502"] },
+        { name: "SONCCO CACERES Victoria Carolina", grade: "SEGUNDO DE SECUNDARIA", phones: ["986041504"] },
+        { name: "TICONA CONDORI Heidy Milena", grade: "SEGUNDO DE SECUNDARIA", phones: ["988462037"] },
+        { name: "VIÑA HUAMAN Esteban Andreus Caleb", grade: "SEGUNDO DE SECUNDARIA", phones: ["978668289"] },
+        { name: "ZAMATA VILLASANTE Midwar Josue", grade: "SEGUNDO DE SECUNDARIA", phones: ["964487689"] },
+        { name: "ZEVALLOS MAMANI Alison Kimberly", grade: "SEGUNDO DE SECUNDARIA", phones: ["937103337"] },
+        { name: "ARMAS PEÑA, Moisés Jubal", grade: "TERCERO DE SECUNDARIA", phones: ["977757841"] },
+        { name: "ARUCUTIPA CALISAYA, Emerson Gary", grade: "TERCERO DE SECUNDARIA", phones: ["921016801"] },
+        { name: "BELÓN AQUINO, Dayiro Andree", grade: "TERCERO DE SECUNDARIA", phones: ["945472154"] },
+        { name: "CALDERON LEANDRO, Yhong Puyol.", grade: "TERCERO DE SECUNDARIA", phones: ["941667129"] },
+        { name: "CARNERO MORALES Oscar Yohani", grade: "TERCERO DE SECUNDARIA", phones: ["951184726"] },
+        { name: "CCALLOCSA TACCA Joel Daniel", grade: "TERCERO DE SECUNDARIA", phones: ["920900874"] },
+        { name: "CCANCHILLO TORRES, Yulissam Priyanka", grade: "TERCERO DE SECUNDARIA", phones: ["927620188"] },
+        { name: "CCORIMANYA ARISACA, Branco Adriano", grade: "TERCERO DE SECUNDARIA", phones: ["943774068"] },
+        { name: "CHOQUE LIZARRAGA, Piero Valentino", grade: "TERCERO DE SECUNDARIA", phones: ["930406151"] },
+        { name: "CHOQUEHUANCA CARI, Nicole Mia Marey", grade: "TERCERO DE SECUNDARIA", phones: ["917209566"] },
+        { name: "COAQUIRA CONDO, Llandhel Roberto Leonel", grade: "TERCERO DE SECUNDARIA", phones: ["910489320"] },
+        { name: "CONDORI QUISPE, Mayli Yasu", grade: "TERCERO DE SECUNDARIA", phones: ["988438892"] },
+        { name: "DEL AGUILA SILVA Carlos Anthony", grade: "TERCERO DE SECUNDARIA", phones: ["935699826"] },
+        { name: "DIAZ CAPACOILA, Anely Yesica", grade: "TERCERO DE SECUNDARIA", phones: ["913678612"] },
+        { name: "ETENE PAREDES Dariana Ayshlin", grade: "TERCERO DE SECUNDARIA", phones: ["901357260"] },
+        { name: "LUNA QUISPE, Jimmy Noé", grade: "TERCERO DE SECUNDARIA", phones: ["978607785"] },
+        { name: "LUQUE VILCAPAZA, Eva Luz", grade: "TERCERO DE SECUNDARIA", phones: ["947444066"] },
+        { name: "MANCHA COAQUIRA, Gorge Luis", grade: "TERCERO DE SECUNDARIA", phones: ["920178101"] },
+        { name: "PALOMINO CHALLCO Cinthya Kaori", grade: "TERCERO DE SECUNDARIA", phones: ["916654976"] },
+        { name: "PEREZ LUPO, Gerald Abdías", grade: "TERCERO DE SECUNDARIA", phones: ["925299073"] },
+        { name: "PHALA TORRES, Benjamín Franco", grade: "TERCERO DE SECUNDARIA", phones: ["955667251"] },
+        { name: "QUISPE CAMALA, José Daniel", grade: "TERCERO DE SECUNDARIA", phones: ["901643065"] },
+        { name: "QUISPE GUTIERREZ, Ana Cristina", grade: "TERCERO DE SECUNDARIA", phones: ["934891580"] },
+        { name: "QUISPE QUISPE, Mario Gabriel", grade: "TERCERO DE SECUNDARIA", phones: ["938827213"] },
+        { name: "QUISPE QUISPE, Thalía Úrsula", grade: "TERCERO DE SECUNDARIA", phones: ["958063865"] },
+        { name: "RIVEROS SUPA, Mathias Leonardo", grade: "TERCERO DE SECUNDARIA", phones: ["977737444"] },
+        { name: "SUAREZ LOPINTA, Damalith Darline", grade: "TERCERO DE SECUNDARIA", phones: ["937762678"] },
+        { name: "VILCA GUTIERREZ, Jandy Betzabe", grade: "TERCERO DE SECUNDARIA", phones: ["975463026"] },
+        { name: "AMANQUI YANARICO, Jean Paul", grade: "CUARTO DE SECUNDARIA", phones: ["981925809"] },
+        { name: "ANCCALLE MERMA, Danna Magdiell", grade: "CUARTO DE SECUNDARIA", phones: ["947450044"] },
+        { name: "AROCUTIPA ROMERO, Zamir Yhonncy", grade: "CUARTO DE SECUNDARIA", phones: ["926547253"] },
+        { name: "BELÓN AQUINO, Fabrizio André", grade: "CUARTO DE SECUNDARIA", phones: ["945472154"] },
+        { name: "BUSTAMANTE CARRASCO Darlin Jhair", grade: "CUARTO DE SECUNDARIA", phones: ["935377870"] },
+        { name: "CHOQUEHUANCA CARI, David Yair", grade: "CUARTO DE SECUNDARIA", phones: ["917209566"] },
+        { name: "CHOQUEPATA BUENO Nadine Cristina", grade: "CUARTO DE SECUNDARIA", phones: ["955515352"] },
+        { name: "DE LA CRUZ ALTAMIRANO Santiago", grade: "CUARTO DE SECUNDARIA", phones: ["915943265"] },
+        { name: "FERNANDEZ SANCHEZ, Christofer Dayiro", grade: "CUARTO DE SECUNDARIA", phones: ["917992439"] },
+        { name: "GARCIA CISA Santiago Benjamin", grade: "CUARTO DE SECUNDARIA", phones: ["958823835"] },
+        { name: "HANAMPA QUISPE, Erick Jonathan", grade: "CUARTO DE SECUNDARIA", phones: ["946241734"] },
+        { name: "HUANCA MAMANI, Anderson Jesus", grade: "CUARTO DE SECUNDARIA", phones: ["979801535"] },
+        { name: "MACHUCA CRUZ Baurulet", grade: "CUARTO DE SECUNDARIA", phones: ["945624107"] },
+        { name: "MAMANI ANAYA Sebastián Mateo", grade: "CUARTO DE SECUNDARIA", phones: ["993957565"] },
+        { name: "MARQUEZ TACURI, Jesús Wilbert", grade: "CUARTO DE SECUNDARIA", phones: ["924283909"] },
+        { name: "MIRAMIRA GUTIERREZ, Josías Daniel", grade: "CUARTO DE SECUNDARIA", phones: ["946784418"] },
+        { name: "ORTEGA BENAVENTE, Nill Antony", grade: "CUARTO DE SECUNDARIA", phones: ["965996467"] },
+        { name: "PUERTAS AGUILAR Nadyn Hurphy Maria", grade: "CUARTO DE SECUNDARIA", phones: ["921360554"] },
+        { name: "QUISPE CUELA AARON IVAN", grade: "CUARTO DE SECUNDARIA", phones: ["902535229"] },
+        { name: "QUISPE QUISPE Luz Shenely", grade: "CUARTO DE SECUNDARIA", phones: ["938827213"] },
+        { name: "ROQUE HUARCA, Dianeth Nicol", grade: "CUARTO DE SECUNDARIA", phones: ["951951810"] },
+        { name: "TOTORA CUCHO Yiuliana Nery", grade: "CUARTO DE SECUNDARIA", phones: ["930799166"] },
+        { name: "VALDEZ SUNI, Luz Maricielo", grade: "CUARTO DE SECUNDARIA", phones: ["967633513"] },
+        { name: "VARGAS CARI Marylin Elena Josenit", grade: "CUARTO DE SECUNDARIA", phones: ["900096938"] },
+        { name: "BRINGAS JUAREZ Brandon Jhalith", grade: "QUINTO DE SECUNDARIA", phones: ["913773650"] },
+        { name: "CANAZA QUISPE Luis Eduardo", grade: "QUINTO DE SECUNDARIA", phones: ["923369622"] },
+        { name: "CARDENAS CARDENAS Vivian Maryel", grade: "QUINTO DE SECUNDARIA", phones: ["987704210"] },
+        { name: "JANAMPA LIMA Jeff Dacio", grade: "QUINTO DE SECUNDARIA", phones: ["951422134"] },
+        { name: "LLANQUE ALMIRON Yader Jocsan", grade: "QUINTO DE SECUNDARIA", phones: ["958005914"] },
+        { name: "MOLLEAPAZA VALERIANO Yesybell Analia", grade: "QUINTO DE SECUNDARIA", phones: ["941296941"] },
+        { name: "SANGUINO MARQUEZ Daylen Alejandra", grade: "QUINTO DE SECUNDARIA", phones: ["921998502"] },
+        { name: "SONCCO CHOQUE Anthony Leonel", grade: "QUINTO DE SECUNDARIA", phones: ["923301369"] },
+        { name: "VILCA ALVAREZ Rodrigo Alejandro", grade: "QUINTO DE SECUNDARIA", phones: ["927481723"] },
+        { name: "VIÑA HUAMAN Brayan Andrés", grade: "QUINTO DE SECUNDARIA", phones: ["978668289"] }
+    ];
+
+    async function seedStudents(){ 
+        if(!currentUserAuth) return; 
+        const snap = await getDocs(studentsRef); 
+        if(snap.empty){ 
+            showToast("Sincronizando directorio escolar... esto tomará unos segundos.", "info");
+            const batch = writeBatch(db);
+            studentsDirectory.forEach(s => { const newRef = doc(studentsRef); batch.set(newRef, s); });
+            await batch.commit();
+            showToast("Directorio de estudiantes listo.", "success"); 
+        } 
     }
 
-    // ==================== RENDERIZADO DOCENTE ====================
-    function renderTasksList() { /* ... */ }
-    function renderExamsList() { /* ... */ }
-    function renderStudentsList() { /* ... */ }
-    async function renderGradesTable() { /* ... */ }
+    initAuth(); 
+    populateSelects();
 
-    // ==================== FUNCIONES DE REPORTE Y RESPUESTAS ====================
-    async function downloadPDFReport(resultId, studentName, examId) { /* ... */ }
-    async function viewStudentAnswers(resultId, studentName, examId) { /* ... */ }
+    // ---------------------------------------------------------
+    // 4. FUNCIONES DOCENTE
+    // ---------------------------------------------------------
+    async function callDeepSeek(prompt, system="Eres un asistente educativo experto."){ 
+        try{ 
+            const res=await fetch("https://api.deepseek.com/v1/chat/completions",{
+                method:"POST",
+                headers:{"Content-Type":"application/json","Authorization":`Bearer ${DEEPSEEK_API_KEY}`},
+                body:JSON.stringify({model:"deepseek-chat",messages:[{role:"system",content:system},{role:"user",content:prompt}],temperature:0.7})
+            }); 
+            if(!res.ok) throw new Error(); 
+            const data=await res.json(); return data.choices[0].message.content; 
+        }catch(e){ return null; } 
+    }
 
-    // ==================== FUNCIONES DE ESTUDIANTE ====================
-    function renderStudentTasks() { /* ... */ }
-    function renderStudentExams() { /* ... */ }
-    async function startExam(exam) { /* ... */ }
-    async function submitExamLogic(exam, modal, questionsDiv) { /* ... */ }
-    function renderStudentGrades() { /* ... */ }
+    document.getElementById("generateTaskDesc")?.addEventListener("click", async ()=>{ 
+        const topic=document.getElementById("taskDesc").value; 
+        if(!topic) return showToast("Escribe un tema primero","error"); 
+        const btn=document.getElementById("generateTaskDesc"); 
+        btn.innerHTML='<div class="spinner"></div>'; btn.disabled=true;
+        const res=await callDeepSeek(`Crea descripción detallada para tarea sobre: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.`); 
+        btn.innerHTML='<i class="fas fa-magic"></i> IA'; btn.disabled=false;
+        if(res){ document.getElementById("taskDesc").value=res; showToast("¡Descripción generada!","success"); }else showToast("Error al conectar con IA","error"); 
+    });
 
-    // ==================== EVENTOS Y NAVEGACIÓN ====================
-    document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
-    document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
-    document.getElementById('loginTeacher').onclick = () => {
-        if (document.getElementById('teacherPass').value === 'profemanu2026') {
-            document.getElementById('teacherModal').classList.add('hidden');
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('teacherPanel').classList.remove('hidden');
-            populateSelects();
-            loadData();
-        } else showToast("Contraseña incorrecta");
+    document.getElementById("publishTask")?.addEventListener("click", async ()=>{ 
+        if(!currentUserAuth) return showToast("Error: No estás autenticado. Verifica tus reglas de Firebase.","error");
+        
+        const title=document.getElementById("taskTitle").value, 
+              grade=document.getElementById("taskGrade").value, 
+              area=document.getElementById("taskArea").value, 
+              topic=document.getElementById("taskDesc").value, 
+              file=document.getElementById("taskFile").files[0], 
+              exampleFile=document.getElementById("taskExampleFile").files[0], 
+              link=document.getElementById("taskLink").value; 
+              
+        if(!title||!grade||!area||!topic) return showToast("Completa Título, Grado, Área y Descripción","error"); 
+        
+        const btn=document.getElementById("publishTask"); 
+        btn.disabled=true; btn.innerHTML='<div class="spinner"></div> Publicando...'; 
+        
+        try{ 
+            let fileURL=null, exampleURL=null;
+            
+            if(file){ 
+                const safeName = cleanFileName(file.name);
+                const sRef=ref(storage, `tareas/${Date.now()}_${safeName}`); 
+                await uploadBytes(sRef,file); 
+                fileURL=await getDownloadURL(sRef); 
+            } 
+            if(exampleFile){ 
+                const safeExName = cleanFileName(exampleFile.name);
+                const seRef=ref(storage, `ejemplos/${Date.now()}_${safeExName}`); 
+                await uploadBytes(seRef,exampleFile); 
+                exampleURL=await getDownloadURL(seRef); 
+            } 
+            
+            await addDoc(tasksRef,{title,grade,area,description:topic,fileURL,exampleURL,link,createdAt:serverTimestamp()}); 
+            showToast("Tarea publicada exitosamente","success"); 
+            
+            document.getElementById("taskTitle").value=""; document.getElementById("taskDesc").value=""; 
+            document.getElementById("taskFile").value=""; document.getElementById("taskExampleFile").value=""; 
+            document.getElementById("taskLink").value="";
+        }catch(e){ 
+            console.error(e);
+            showToast("Error de subida. Revisa permisos Storage: " + e.message, "error"); 
+        }finally{ 
+            btn.disabled=false; btn.innerHTML="Publicar Tarea en el Aula"; 
+        } 
+    });
+
+    function getCurrentQuestionsFromDOM(){ 
+        const divs=document.querySelectorAll("#questionsContainer .exam-question-edit"); const qs=[]; 
+        divs.forEach(div=>{ 
+            const inputs=div.querySelectorAll("input[type='text']"); 
+            const text=inputs[0].value; 
+            const options=[inputs[1].value,inputs[2].value,inputs[3].value,inputs[4].value]; 
+            const correct=parseInt(div.querySelector(".correct-option").value); 
+            if(text && options.every(o=>o.trim())) qs.push({text,options,correct}); 
+        }); return qs; 
+    }
+
+    document.getElementById("generateQuestions")?.addEventListener("click", async () => { 
+        const topic = document.getElementById("examTopic").value.trim(); 
+        const num = parseInt(document.getElementById("numQuestions").value) || 10; 
+        if (!topic) return showToast("Escribe el tema detallado","error"); 
+        
+        const btn = document.getElementById("generateQuestions"); 
+        btn.innerHTML='<div class="spinner"></div>'; btn.disabled=true; 
+        
+        try{ 
+            const prompt = `Genera un cuestionario de ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO un array JSON válido: [{"text":"Pregunta","options":["Op1","Op2","Op3","Op4"],"correct":0}] (0 es la correcta)`; 
+            let res = await callDeepSeek(prompt, "Eres un generador de JSON estricto."); 
+            let clean = res.replace(/```json/g,'').replace(/```/g,'').trim(); 
+            let questions = JSON.parse(clean); 
+            
+            const container = document.getElementById("questionsEditor"); 
+            container.innerHTML = ""; container.classList.remove("hidden");
+            
+            questions.forEach((q,idx)=>{ 
+                const div = document.createElement("div"); div.className = "bg-white p-4 rounded-xl border border-gray-200 shadow-sm relative exam-question-edit"; 
+                div.innerHTML = `<div class="absolute top-2 right-2"><button class="remove-question text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button></div><label class="text-xs text-gray-500 font-bold mb-1 block">Pregunta ${idx+1}</label><input type="text" value="${escapeHtml(q.text)}" class="w-full border-b p-2 mb-3 bg-transparent"><div class="grid grid-cols-2 gap-2">${q.options.map((opt,i)=>`<div><input type="text" value="${escapeHtml(opt)}" class="border rounded p-1 w-full text-sm"></div>`).join('')}</div><select class="correct-option border rounded p-1 mt-3 text-xs bg-emerald-50 font-bold text-emerald-700"><option value="0" ${q.correct===0?'selected':''}>La Opción 1 es correcta</option><option value="1" ${q.correct===1?'selected':''}>La Opción 2 es correcta</option><option value="2" ${q.correct===2?'selected':''}>La Opción 3 es correcta</option><option value="3" ${q.correct===3?'selected':''}>La Opción 4 es correcta</option></select>`; 
+                container.appendChild(div); 
+            }); 
+            document.querySelectorAll(".remove-question").forEach(b=>b.onclick=function(){this.closest(".exam-question-edit").remove();}); 
+            
+            document.getElementById("postExamGeneration").classList.remove("hidden"); 
+            document.getElementById("numQuestionsExam").max = questions.length; 
+            document.getElementById("numQuestionsExam").value = Math.min(5, questions.length); 
+            showToast(`✅ Banco de ${questions.length} preguntas generado`, "success"); 
+        } catch(e){ 
+            showToast("Error al generar JSON de preguntas","error"); 
+        } finally { 
+            btn.innerHTML = '<i class="fas fa-bolt"></i> Generar'; btn.disabled = false; 
+        } 
+    });
+
+    document.getElementById("dlCuestionarioPdf")?.addEventListener("click",()=>{ 
+        const qs=getCurrentQuestionsFromDOM(); if(!qs.length) return showToast("No hay preguntas","error"); 
+        const {jsPDF}=window.jspdf; const doc=new jsPDF(); 
+        doc.setFontSize(18); doc.text(`Cuestionario de Estudio: ${document.getElementById("examTitle").value || 'General'}`,20,20); 
+        let y=35; qs.forEach((q,i)=>{ if(y>270){doc.addPage(); y=20;} doc.setFontSize(11); doc.setFont("helvetica","bold"); const lines=doc.splitTextToSize(`${i+1}. ${q.text}`,170); doc.text(lines,20,y); y+=lines.length*6; doc.setFontSize(10); doc.setFont("helvetica","normal"); q.options.forEach((o,j)=> { doc.text(`   [ ] ${o}`,25,y); y+=5; }); y+=5; }); doc.save("Cuestionario_Estudio.pdf"); 
+    });
+
+    document.getElementById("sendCuestionarioWa")?.addEventListener("click",()=>{ 
+        const qs=getCurrentQuestionsFromDOM(); if(!qs.length) return showToast("No hay preguntas","error"); 
+        let t=`*Cuestionario: ${document.getElementById("examTitle").value}*\n\n`; qs.forEach((q,i)=>{ t+=`*${i+1}. ${q.text}*\n`; q.options.forEach((o,j)=> t+=`   - ${o}\n`); t+=`\n`; }); 
+        window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,'_blank'); 
+    });
+
+    document.getElementById("publishExam")?.addEventListener("click", async ()=>{ 
+        if(!currentUserAuth) return; 
+        const title=document.getElementById("examTitle").value, grade=document.getElementById("examGrade").value, area=document.getElementById("examArea").value; 
+        let qs=getCurrentQuestionsFromDOM(); const num=parseInt(document.getElementById("numQuestionsExam").value)||qs.length; 
+        if(!title||!grade||!area||!qs.length) return showToast("Completa Título, Grado y Área","error"); 
+        if(num<qs.length) qs=qs.slice(0,num); 
+        
+        const btn=document.getElementById("publishExam"); btn.disabled=true; btn.innerHTML='<div class="spinner"></div>'; 
+        try{ 
+            await addDoc(examsRef,{title,grade,area,questions:qs,createdAt:serverTimestamp()}); 
+            showToast("Examen publicado al aula virtual","success"); 
+            document.getElementById("questionsEditor").innerHTML=""; document.getElementById("postExamGeneration").classList.add("hidden"); 
+            document.getElementById("examTitle").value=""; document.getElementById("examTopic").value="";
+        }catch(e){ showToast("Error al publicar","error"); }finally{ btn.disabled=false; btn.innerHTML="Publicar al Aula"; } 
+    });
+
+    // VISTAS DOCENTE
+    function renderTasks(){ 
+        const g=document.getElementById("filterTasksGrade").value, a=document.getElementById("filterTasksArea").value, c=document.getElementById("tasksList");
+        const filtered=allTasks.filter(t=>(!g||t.grade===g)&&(!a||t.area===a));
+        c.innerHTML=filtered.length ? filtered.map(t=>`<div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between"><div class="mb-4"><div class="font-bold text-indigo-700 text-lg">${escapeHtml(t.title)}</div><div class="text-xs font-bold text-gray-400 mb-2 uppercase">${t.area} • ${t.grade}</div><p class="text-sm text-gray-600">${escapeHtml(t.description||'')}</p></div><div class="flex flex-col gap-2 border-t pt-3">${t.fileURL?`<a href="${t.fileURL}" target="_blank" class="text-sm text-indigo-600 hover:text-indigo-800 font-bold"><i class="fas fa-file-download w-5"></i> Archivo Principal</a>`:''}${t.exampleURL?`<a href="${t.exampleURL}" target="_blank" class="text-sm text-emerald-600 hover:text-emerald-800 font-bold"><i class="fas fa-file-invoice w-5"></i> Material Apoyo</a>`:''}${t.link?`<a href="${t.link}" target="_blank" class="text-sm text-blue-500 hover:text-blue-700 font-bold"><i class="fas fa-link w-5"></i> Enlace Web</a>`:''}<button class="delete-task mt-2 bg-red-50 hover:bg-red-100 text-red-600 py-2 rounded-lg font-bold text-sm transition" data-id="${t.id}">Eliminar Tarea</button></div></div>`).join('') : '<div class="col-span-full text-center py-8 text-gray-400">No hay tareas con estos filtros.</div>';
+        document.querySelectorAll('.delete-task').forEach(b=>b.onclick=()=>showConfirm("¿Eliminar esta tarea de forma permanente?",async()=>{await deleteDoc(doc(tasksRef,b.dataset.id));}));
+    }
+
+    function renderExams(){ 
+        const g=document.getElementById("filterExamsGrade").value, a=document.getElementById("filterExamsArea").value, c=document.getElementById("examsList"); 
+        const filtered=allExams.filter(e=>(!g||e.grade===g)&&(!a||e.area===a)); 
+        c.innerHTML=filtered.length ? filtered.map(e=>`<div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100"><div class="font-bold text-purple-700 text-lg">${escapeHtml(e.title)}</div><div class="text-xs font-bold text-gray-400 mb-3 uppercase">${e.area} • ${e.grade}</div><div class="text-sm font-bold text-gray-700 mb-4 bg-gray-50 p-2 rounded inline-block"><i class="fas fa-list-ol text-purple-400"></i> ${e.questions.length} preguntas</div><div class="flex gap-2 mt-2 pt-4 border-t"><button class="delete-exam flex-1 bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-red-100" data-id="${e.id}">Eliminar</button><button class="delete-results flex-1 bg-orange-50 text-orange-600 px-3 py-2 rounded-lg text-sm font-bold hover:bg-orange-100" data-id="${e.id}" data-title="${escapeHtml(e.title)}">Borrar Notas</button></div></div>`).join('') : '<div class="col-span-full text-center py-8 text-gray-400">No se encontraron exámenes.</div>'; 
+        document.querySelectorAll('.delete-exam').forEach(b=>b.onclick=()=>showConfirm("¿Eliminar este examen del aula?",async()=>{await deleteDoc(doc(examsRef,b.dataset.id));})); 
+        document.querySelectorAll('.delete-results').forEach(b=>b.onclick=()=> { showConfirm(`¿Borrar TODAS las notas de "${b.dataset.title}"?`, async () => { const q = query(resultsRef, where("examId", "==", b.dataset.id)); const snap = await getDocs(q); const batch = writeBatch(db); snap.docs.forEach(d => batch.delete(d.ref)); await batch.commit(); showToast("Notas eliminadas", "success"); }); });
+    }
+
+    function renderSubs(){ 
+        const g=document.getElementById("filterSubsGrade").value, a=document.getElementById("filterSubsArea").value, c=document.getElementById("submissionsList");
+        const f=allSubs.filter(s=>(!g||s.studentGrade===g)&&(!a||s.taskArea===a));
+        c.innerHTML=f.length ? f.map(s=>`<div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center"><div class="flex-1"><div class="font-bold text-gray-800">${escapeHtml(s.studentName)}</div><div class="text-xs text-gray-500 mb-1">${escapeHtml(s.taskTitle)} <span class="text-indigo-400 font-bold ml-1">(${escapeHtml(s.taskArea)})</span></div><div class="text-[10px] text-gray-400"><i class="fas fa-clock"></i> ${s.submittedAt ? new Date(s.submittedAt.toMillis()).toLocaleString() : 'Reciente'}</div></div><a href="${s.fileURL}" target="_blank" class="bg-indigo-50 text-indigo-600 p-3 rounded-lg hover:bg-indigo-100 transition"><i class="fas fa-download text-lg"></i></a></div>`).join('') : '<div class="text-center py-8 text-gray-400">No hay entregas pendientes.</div>';
+    }
+
+    function renderStudents(){ 
+        const g=document.getElementById("filterStudentsGrade").value, c=document.getElementById("allStudentsList");
+        if(!g){ c.innerHTML='<div class="col-span-full text-center py-8 text-gray-400">Selecciona un grado arriba para ver la lista.</div>'; return; }
+        const f=allStudents.filter(s=>s.grade===g);
+        c.innerHTML=f.length ? f.map(s=>`<div class="bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center"><div class="flex-1"><div class="font-bold text-sm text-gray-700">${escapeHtml(s.name)}</div><div class="text-[11px] text-emerald-600 font-bold"><i class="fas fa-phone-alt"></i> ${s.phones.join(", ")}</div></div><button class="delete-student text-red-300 hover:text-red-600 transition p-2" data-id="${s.id}"><i class="fas fa-user-minus"></i></button></div>`).join('') : '<div class="col-span-full text-center py-8 text-gray-400">Sin alumnos registrados.</div>';
+        document.querySelectorAll('.delete-student').forEach(b=>b.onclick=()=>showConfirm("¿Remover a este estudiante?",async()=>{await deleteDoc(doc(studentsRef,b.dataset.id));}));
+    }
+
+    function renderGradesTable(){ 
+        const g=document.getElementById("filterGrade").value, a=document.getElementById("filterArea").value, tbody=document.getElementById("gradesTableBody"); 
+        if(!g || !a){ tbody.innerHTML='<tr><td colspan="6" class="p-6 text-center text-gray-400 font-bold bg-gray-50">Selecciona Grado y Área para cargar las notas.</td></tr>'; return; } 
+        const res = allResults.filter(r => { const s = allStudents.find(st=>st.id===r.studentId); return (s?s.grade:r.studentGrade)===g && r.examArea===a; }); 
+        res.sort((a,b)=> (allStudents.find(s=>s.id===a.studentId)?.name||"").localeCompare(allStudents.find(s=>s.id===b.studentId)?.name||""));
+        tbody.innerHTML = res.length ? res.map(r => { 
+            const s = allStudents.find(st=>st.id===r.studentId); const name = s ? s.name : "Alumno Removido"; const phone = s?.phones?.[0] || "";
+            let c = r.grade==='AD'||r.grade==='A' ? 'text-emerald-600' : r.grade==='B' ? 'text-amber-600' : 'text-red-600';
+            return `<tr class="border-b hover:bg-gray-50 transition"><td class="p-3 text-sm font-bold text-gray-700">${escapeHtml(name)}</td><td class="p-3 text-xs text-gray-500">${escapeHtml(r.examTitle)}</td><td class="p-3 text-center font-black ${c} text-lg">${r.grade}</td><td class="p-3 text-center text-sm font-bold text-gray-600">${r.score}/${r.total}</td><td class="p-3 text-center flex justify-center gap-2"><button class="view-st text-blue-500 hover:bg-blue-50 p-2 rounded" data-rid="${r.id}" data-name="${escapeHtml(name)}" data-eid="${r.examId}"><i class="fas fa-eye"></i></button><button class="dl-st text-emerald-500 hover:bg-emerald-50 p-2 rounded" data-rid="${r.id}" data-name="${escapeHtml(name)}" data-eid="${r.examId}"><i class="fas fa-file-pdf"></i></button><button class="wa-st text-green-500 hover:bg-green-50 p-2 rounded" data-ph="${phone}" data-g="${r.grade}" data-ex="${escapeHtml(r.examTitle)}"><i class="fab fa-whatsapp"></i></button></td><td class="p-3 text-right text-[10px] text-gray-400">${r.date?new Date(r.date.toMillis()).toLocaleDateString():''}</td></tr>`;
+        }).join('') : '<tr><td colspan="6" class="p-6 text-center text-gray-400">No hay notas registradas para este filtro.</td></tr>';
+        
+        document.querySelectorAll('.view-st').forEach(b=>b.onclick=()=>viewStudentAnswers(b.dataset.rid, b.dataset.name, b.dataset.eid));
+        document.querySelectorAll('.dl-st').forEach(b=>b.onclick=()=>downloadPDFReport(b.dataset.rid, b.dataset.name, b.dataset.eid));
+        document.querySelectorAll('.wa-st').forEach(b=>b.onclick=()=>{ if(b.dataset.ph) window.open(`https://wa.me/51${b.dataset.ph.replace(/\s/g,'')}?text=${encodeURIComponent(`Boleta de Notas\nExamen: ${b.dataset.ex}\nCalificación: ${b.dataset.g}`)}`,'_blank'); });
+    }
+
+    document.getElementById("addStudent")?.addEventListener("click", async ()=>{ 
+        if(!currentUserAuth) return; 
+        const name=document.getElementById("newStudentName").value.trim().toUpperCase(), grade=document.getElementById("newStudentGrade").value, phone=document.getElementById("newStudentPhone").value.trim(); 
+        if(!name||!grade) return showToast("Nombre y Grado obligatorios","error"); 
+        const btn=document.getElementById("addStudent"); btn.innerHTML='<div class="spinner"></div>'; btn.disabled=true; 
+        try{ await addDoc(studentsRef,{name,grade,phones:phone?[phone]:[]}); showToast("Estudiante guardado","success"); document.getElementById("newStudentName").value=""; document.getElementById("newStudentPhone").value=""; document.getElementById("filterStudentsGrade").value=grade; renderStudents(); }catch(e){ showToast("Error al guardar","error"); }finally{ btn.innerHTML='Guardar'; btn.disabled=false; } 
+    });
+
+    // LISTENERS DOCENTE
+    function loadDocData(){
+        onSnapshot(tasksRef, s=>{ allTasks=s.docs.map(d=>({id:d.id,...d.data()})); allTasks.sort((a,b)=>(b.createdAt?.toMillis()||0)-(a.createdAt?.toMillis()||0)); renderTasks(); });
+        onSnapshot(examsRef, s=>{ allExams=s.docs.map(d=>({id:d.id,...d.data()})); allExams.sort((a,b)=>(b.createdAt?.toMillis()||0)-(a.createdAt?.toMillis()||0)); renderExams(); });
+        onSnapshot(submissionsRef, s=>{ allSubs=s.docs.map(d=>({id:d.id,...d.data()})); allSubs.sort((a,b)=>(b.submittedAt?.toMillis()||0)-(a.submittedAt?.toMillis()||0)); renderSubs(); });
+        onSnapshot(studentsRef, s=>{ allStudents=s.docs.map(d=>({id:d.id,...d.data()})); allStudents.sort((a,b)=>a.name.localeCompare(b.name)); renderStudents(); renderGradesTable(); });
+        onSnapshot(resultsRef, s=>{ allResults=s.docs.map(d=>({id:d.id,...d.data()})); renderGradesTable(); });
+    }
+    
+    document.getElementById('refreshTasksBtn')?.addEventListener('click', renderTasks);
+    document.getElementById('refreshExamsBtn')?.addEventListener('click', renderExams);
+    document.getElementById('refreshSubsBtn')?.addEventListener('click', renderSubs);
+    document.getElementById('refreshStudentsBtn')?.addEventListener('click', renderStudents);
+    document.getElementById('refreshGradesBtn')?.addEventListener('click', renderGradesTable);
+
+    // ---------------------------------------------------------
+    // 5. FUNCIONES ESTUDIANTE
+    // ---------------------------------------------------------
+    function renderStudentTasks() { 
+        const c = document.getElementById("studentTasksList"); 
+        const f = allTasks.filter(t=>t.grade===currentStudent.grade);
+        c.innerHTML = f.length ? f.map(t => `<div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-indigo-500 flex flex-col h-full"><div class="flex-1"><div class="font-black text-xl text-gray-800 mb-1">${escapeHtml(t.title)}</div><div class="text-[11px] font-bold text-indigo-500 uppercase mb-3">${t.area}</div><p class="text-sm text-gray-600 mb-5">${escapeHtml(t.description||'')}</p><div class="flex flex-wrap gap-2 mb-6">${t.fileURL?`<a href="${t.fileURL}" target="_blank" class="bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-indigo-100 transition"><i class="fas fa-file-download mr-1"></i> Guía Tarea</a>`:''}${t.exampleURL?`<a href="${t.exampleURL}" target="_blank" class="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-100 transition"><i class="fas fa-file-invoice mr-1"></i> Ejemplo</a>`:''}${t.link?`<a href="${t.link}" target="_blank" class="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100 transition"><i class="fas fa-link mr-1"></i> Enlace Web</a>`:''}</div></div><div class="pt-4 border-t border-gray-100"><label class="text-[10px] font-bold text-gray-400 block mb-2 uppercase"><i class="fas fa-upload"></i> Subir mi trabajo resuelto:</label><input type="file" id="file_${t.id}" class="text-xs w-full mb-3 file:bg-gray-100 file:border-0 file:rounded file:px-3 file:py-1"><button class="submit-task w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold shadow-md transition" data-tid="${t.id}" data-ttitle="${escapeHtml(t.title)}" data-tarea="${escapeHtml(t.area)}">Entregar a Profesor</button></div></div>`).join('') : '<div class="col-span-full text-center py-12 text-gray-400 font-bold"><i class="fas fa-glass-cheers text-3xl mb-3 block text-gray-300"></i> No tienes tareas asignadas. ¡Disfruta tu día!</div>';
+        
+        document.querySelectorAll('.submit-task').forEach(b => b.onclick = async () => { 
+            const tid = b.dataset.tid, file = document.getElementById(`file_${tid}`).files[0]; 
+            if(!file) return showToast("Selecciona el archivo de tu tarea primero.","error");
+            
+            const originalTxt = b.innerText; b.disabled=true; b.innerHTML='<i class="fas fa-spinner fa-spin"></i> Subiendo...';
+            try {
+                const safeName = cleanFileName(file.name);
+                const sRef = ref(storage, `entregas/${currentStudent.id}_${tid}_${Date.now()}_${safeName}`);
+                await uploadBytes(sRef, file); 
+                const url = await getDownloadURL(sRef);
+                
+                await addDoc(submissionsRef, { studentId:currentStudent.id, studentName:currentStudent.name, studentGrade:currentStudent.grade, taskId:tid, taskTitle:b.dataset.ttitle, taskArea:b.dataset.tarea, fileURL:url, submittedAt:serverTimestamp(), gradeIA:"Pendiente de revisión" });
+                showToast("¡Tarea entregada exitosamente!", "success");
+                
+                document.getElementById(`file_${tid}`).value = "";
+                showConfirm("¿Avisar a tus padres por WhatsApp que ya cumpliste con la tarea?", () => { const p = currentStudent.phones[0]?.replace(/\s/g,''); if(p) window.open(`https://wa.me/51${p}?text=${encodeURIComponent(`✅ Hola, acabo de entregar mi tarea de ${b.dataset.tarea} titulada "${b.dataset.ttitle}".`)}`,'_blank'); });
+            } catch(e) { 
+                console.error(e);
+                showToast("Error al entregar. Verifica tu conexión: " + e.message,"error"); 
+            } finally { 
+                b.disabled=false; b.innerText=originalTxt; 
+            }
+        });
+    }
+
+    function renderStudentExams() { 
+        const c = document.getElementById("studentExamsList"); 
+        const f = allExams.filter(e=>e.grade===currentStudent.grade);
+        c.innerHTML = f.length ? f.map(e=>`<div class="bg-white p-6 rounded-2xl shadow-md border-t-4 border-purple-500 flex justify-between items-center"><div class="flex-1"><div class="font-black text-xl text-gray-800 mb-1">${escapeHtml(e.title)}</div><div class="text-xs font-bold text-purple-500 uppercase mb-2">${e.area}</div><div class="text-sm font-bold text-gray-500 bg-gray-50 inline-block px-3 py-1 rounded-lg"><i class="fas fa-clipboard-list"></i> ${e.questions.length} preguntas</div></div><button class="take-exam-btn bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition" data-exam='${JSON.stringify(e).replace(/'/g,"&apos;")}'>Resolver Examen</button></div>`).join('') : '<div class="col-span-full text-center py-12 text-gray-400 font-bold"><i class="fas fa-clipboard-check text-3xl mb-3 block text-gray-300"></i> No hay exámenes programados.</div>'; 
+        document.querySelectorAll('.take-exam-btn').forEach(b=>b.onclick=()=>startExam(JSON.parse(b.dataset.exam))); 
+    }
+
+    function renderStudentGrades() { 
+        const c = document.getElementById("studentGradesList"); 
+        const f = allResults.filter(r=>r.studentId===currentStudent.id).sort((a,b)=>(b.date?.toMillis()||0)-(a.date?.toMillis()||0));
+        c.innerHTML = f.length ? f.map(r=>{
+            let col = r.grade==='AD'||r.grade==='A'?'text-emerald-500':r.grade==='B'?'text-amber-500':'text-red-500';
+            return `<div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden"><div class="absolute top-0 right-0 p-3 opacity-10 ${col}"><i class="fas fa-star text-6xl"></i></div><div class="font-bold text-sm text-gray-600 mb-1 z-10 relative">${escapeHtml(r.examTitle)}</div><div class="text-4xl font-black ${col} my-2 z-10 relative">${r.grade}</div><div class="text-xs font-bold text-gray-400 mb-4 z-10 relative"><i class="fas fa-bullseye"></i> ${r.score} de ${r.total} correctas</div><button class="wa-btn w-full bg-green-50 text-green-600 border border-green-200 py-2 rounded-lg text-sm font-bold hover:bg-green-500 hover:text-white transition z-10 relative" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}"><i class="fab fa-whatsapp text-lg align-middle mr-1"></i> Avisar a padres</button></div>`;
+        }).join('') : '<div class="col-span-full text-center py-12 text-gray-400 font-bold">Aún no tienes calificaciones registradas en el sistema.</div>'; 
+        document.querySelectorAll('.wa-btn').forEach(b=>b.onclick=()=>{ const p=currentStudent.phones[0]?.replace(/\s/g,''); if(p) window.open(`https://wa.me/51${p}?text=${encodeURIComponent(`¡Hola! Mi nota en el examen "${b.dataset.exam}" es: ${b.dataset.grade} 🌟`)}`,'_blank'); }); 
+    }
+
+    async function startExam(exam) { 
+        const already = allResults.some(r => r.studentId === currentStudent.id && r.examId === exam.id);
+        if(already) return showToast("Ya resolviste este examen. Tienes un solo intento.","error"); 
+        
+        const modal = document.getElementById("examTakeModal"), content = document.getElementById("examTakeQuestions"); 
+        document.getElementById("examTakeTitle").innerText = exam.title; 
+        
+        content.innerHTML = exam.questions.map((q,idx)=>`<div class="bg-gray-50 p-5 rounded-xl border border-gray-200"><p class="font-bold text-lg text-gray-800 mb-4">${idx+1}. ${escapeHtml(q.text)}</p><div class="space-y-3">${q.options.map((opt,i)=>`<label class="flex items-center p-3 rounded-lg border bg-white cursor-pointer hover:bg-indigo-50 transition"><input type="radio" name="q${idx}" value="${i}" class="w-5 h-5 text-indigo-600 mr-3"> <span class="text-sm font-semibold text-gray-700">${escapeHtml(opt)}</span></label>`).join('')}</div></div>`).join(''); 
+        modal.classList.remove("hidden"); modal.classList.add("flex"); 
+        
+        let timeLeft = 30*60; const timerSpan = document.getElementById("timer"); 
+        if(examTimerInterval) clearInterval(examTimerInterval); 
+        examTimerInterval = setInterval(()=>{ 
+            timeLeft--; timerSpan.innerText = `${Math.floor(timeLeft/60).toString().padStart(2,'0')}:${(timeLeft%60).toString().padStart(2,'0')}`; 
+            if(timeLeft<=0){ clearInterval(examTimerInterval); showToast("¡Tiempo agotado!","info"); submitExamLogic(exam,modal,content); } 
+        },1000); 
+        
+        const subBtn = document.getElementById("submitExamBtn"), canBtn = document.getElementById("cancelExam"); 
+        const nSub = subBtn.cloneNode(true), nCan = canBtn.cloneNode(true); 
+        subBtn.parentNode.replaceChild(nSub,subBtn); canBtn.parentNode.replaceChild(nCan,canBtn); 
+        
+        nSub.onclick = () => showConfirm("¿Seguro que deseas enviar tus respuestas para calificación?",()=>{ clearInterval(examTimerInterval); submitExamLogic(exam,modal,content); }); 
+        nCan.onclick = () => showConfirm("Si abandonas, podrías perder el intento. ¿Deseas salir?",()=>{ clearInterval(examTimerInterval); modal.classList.add("hidden"); modal.classList.remove("flex"); }); 
+    }
+
+    async function submitExamLogic(exam, modal, contentDiv){ 
+        const answers = []; 
+        exam.questions.forEach((_,idx)=>{ const sel = contentDiv.querySelector(`input[name="q${idx}"]:checked`); answers.push(sel?parseInt(sel.value):-1); }); 
+        let correct=0; exam.questions.forEach((q,idx)=>{ if(answers[idx]===q.correct) correct++; }); 
+        const percent = (correct/exam.questions.length)*100; 
+        let grade="C"; if(percent>=90) grade="AD"; else if(percent>=75) grade="A"; else if(percent>=60) grade="B"; 
+        
+        modal.classList.add("hidden"); modal.classList.remove("flex"); 
+        try{ 
+            const dRef = await addDoc(resultsRef,{ studentId:currentStudent.id, studentName:currentStudent.name, studentGrade:currentStudent.grade, examId:exam.id, examTitle:exam.title, examArea:exam.area, grade, score:correct, total:exam.questions.length, date:serverTimestamp(), answers }); 
+            showToast(`¡Examen terminado! Nota final: ${grade}`,"success"); 
+            showConfirm("¿Deseas ver cuáles fueron tus errores y respuestas correctas (Retroalimentación)?",()=>{ 
+                downloadPDFReport(dRef.id, currentStudent.name, exam.id); 
+            }); 
+        }catch(e){ showToast("Error de conexión al guardar la nota.","error"); } 
+    }
+
+    // Visor HTML de respuestas
+    async function viewStudentAnswers(resultId, studentName, examId){ 
+        const resultDoc=await getDoc(doc(resultsRef,resultId)); if(!resultDoc.exists()) return; 
+        const result=resultDoc.data(), answers=result.answers||[]; 
+        const examDoc=await getDoc(doc(examsRef,examId)); if(!examDoc.exists()) return; 
+        const exam=examDoc.data(); 
+        
+        const modal=document.getElementById("viewAnswersModal"); document.getElementById("viewAnswersTitle").innerText=`Revisión: ${exam.title} - ${studentName}`; 
+        let html=`<div class="mb-6 p-4 bg-blue-100 text-blue-900 rounded-xl font-bold text-center text-lg shadow-sm">Nota Oficial: ${result.grade} (${result.score}/${result.total})</div>`; 
+        
+        exam.questions.forEach((q,idx)=>{ 
+            const ua=answers[idx]!==undefined?answers[idx]:-1; const isC=ua===q.correct; 
+            html+=`<div class="border border-gray-200 p-5 rounded-xl mb-4 bg-gray-50"><p class="font-bold text-gray-800 mb-3">${idx+1}. ${escapeHtml(q.text)}</p><div class="space-y-2 ml-2">${q.options.map((opt,i)=>{ 
+                let mark="", cls="text-gray-600 bg-white p-2 rounded border"; 
+                if(i===q.correct) { mark="<span class='float-right text-emerald-500 font-bold'><i class='fas fa-check-circle'></i> Correcta</span>"; cls="bg-emerald-50 border-emerald-200 text-emerald-800 font-bold"; } 
+                else if(ua===i) { mark="<span class='float-right text-red-500 font-bold'><i class='fas fa-times-circle'></i> Tu respuesta</span>"; cls="bg-red-50 border-red-200 text-red-800 font-bold"; } 
+                return `<div class="${cls}">${String.fromCharCode(65+i)}. ${escapeHtml(opt)} ${mark}</div>`; 
+            }).join('')}</div></div>`; 
+        }); 
+        document.getElementById("viewAnswersContent").innerHTML=html; modal.classList.remove("hidden"); modal.classList.add("flex"); 
+    }
+
+    // Reporte PDF Avanzado
+    async function downloadPDFReport(resultId, studentName, examId) {
+        try {
+            showToast("Generando PDF...", "info");
+            let resultData = null, answers = [];
+            
+            if (resultId) { const rd = await getDoc(doc(resultsRef, resultId)); if (rd.exists()) { resultData = rd.data(); answers = resultData.answers || []; } }
+            if (!resultData && currentStudent && examId) { const q = query(resultsRef, where("studentId", "==", currentStudent.id), where("examId", "==", examId)); const snap = await getDocs(q); if (!snap.empty) { resultData = snap.docs[0].data(); answers = resultData.answers || []; } }
+            if (!resultData) return showToast("No se encontró el resultado","error");
+            
+            const examDoc = await getDoc(doc(examsRef, examId)); if (!examDoc.exists()) return;
+            const exam = examDoc.data();
+            
+            const { jsPDF } = window.jspdf; const docP = new jsPDF();
+            
+            docP.setFontSize(22); docP.setTextColor(79, 70, 229); docP.text(`Reporte Oficial de Evaluación`, 20, 20);
+            docP.setFontSize(12); docP.setTextColor(80, 80, 80); docP.text(`Examen: ${exam.title}`, 20, 32); docP.text(`Estudiante: ${studentName}`, 20, 38);
+            docP.setFont("helvetica", "bold"); docP.text(`Calificación Final: ${resultData.grade} (${resultData.score}/${resultData.total})`, 20, 46); docP.setFont("helvetica", "normal");
+            
+            docP.setLineWidth(0.5); docP.setDrawColor(200, 200, 200); docP.line(20, 52, 190, 52);
+            docP.setFontSize(14); docP.setTextColor(30, 30, 30); docP.text("Corrección y Retroalimentación:", 20, 62);
+            
+            let yPos = 72; docP.setFontSize(10);
+            for (let idx = 0; idx < exam.questions.length; idx++) {
+                if (yPos > 270) { docP.addPage(); yPos = 20; }
+                const q = exam.questions[idx]; const ua = answers[idx] !== undefined ? answers[idx] : -1;
+                const uaTxt = ua === -1 ? "N/A (En blanco)" : q.options[ua]; const caTxt = q.options[q.correct]; const isC = (ua === q.correct);
+                
+                docP.setTextColor(0, 0, 0); docP.setFont("helvetica", "bold");
+                const splitQ = docP.splitTextToSize(`${idx + 1}. ${q.text}`, 170); docP.text(splitQ, 20, yPos); yPos += (splitQ.length * 5) + 2;
+                
+                docP.setFont("helvetica", "normal");
+                if (isC) { docP.setTextColor(16, 185, 129); docP.text(`✓ Tu respuesta: ${uaTxt}`, 25, yPos); yPos += 7; } 
+                else { docP.setTextColor(239, 68, 68); docP.text(`✗ Tu respuesta: ${uaTxt}`, 25, yPos); yPos += 5; docP.setTextColor(79, 70, 229); docP.text(`▶ Correcta: ${caTxt}`, 25, yPos); yPos += 7; }
+                yPos += 2;
+            }
+            docP.save(`Notas_${studentName.split(' ')[0]}_${exam.title}.pdf`); showToast("PDF descargado", "success");
+        } catch (error) { showToast("Error al generar PDF", "error"); }
+    }
+
+    // ---------------------------------------------------------
+    // 6. EVENTOS DE NAVEGACIÓN Y TABS
+    // ---------------------------------------------------------
+    document.getElementById('teacherBtn').onclick = () => { document.getElementById('teacherModal').classList.remove('hidden'); document.getElementById('teacherModal').classList.add('flex'); };
+    document.getElementById('closeTeacherModal').onclick = () => { document.getElementById('teacherModal').classList.add('hidden'); document.getElementById('teacherModal').classList.remove('flex'); };
+    
+    document.getElementById('loginTeacherBtn').onclick = () => {
+        if (document.getElementById('teacherPass').value === 'admin2026') {
+            document.getElementById('teacherModal').classList.add('hidden'); document.getElementById('welcomeScreen').classList.add('hidden'); document.getElementById('teacherPanel').classList.remove('hidden');
+            loadDocData(); showToast("Has ingresado como Docente", "success");
+        } else showToast("Contraseña incorrecta", "error");
     };
-    document.getElementById('logoutTeacherPanel').onclick = () => {
-        document.getElementById('teacherPanel').classList.add('hidden');
-        document.getElementById('welcomeScreen').classList.remove('hidden');
-    };
+    
+    document.getElementById('logoutTeacherPanel').onclick = () => { document.getElementById('teacherPanel').classList.add('hidden'); document.getElementById('welcomeScreen').classList.remove('hidden'); document.getElementById('teacherPass').value = ''; };
 
     document.getElementById('studentBtn').onclick = async () => {
+        if (!currentUserAuth) return showToast("Conectando al servidor...","info");
         await seedStudents();
-        // --- NUEVA LÍNEA: Cargar estudiantes explícitamente ---
-        const snapshot = await getDocs(studentsRef);
-        allStudents = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-        // --------------------------------------------------------
-        populateSelects();
-        document.getElementById('studentModal').classList.remove('hidden');
-        const gradeSelect = document.getElementById('studentGradeSelect');
-        const nameSelect = document.getElementById('studentNameSelect');
-        const loadNames = async () => {
-            const grade = gradeSelect.value;
-            const students = allStudents.filter(s => s.grade === grade);
-            nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + students.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join('');
-        };
-        gradeSelect.onchange = loadNames;
-        await loadNames();
+        const gs = document.getElementById('studentGradeSelect'), ns = document.getElementById('studentNameSelect');
+        const loadN = async () => { const g = gs.value; const snap = await getDocs(studentsRef); const f = snap.docs.map(d=>({id:d.id,...d.data()})).filter(s=>s.grade===g); ns.innerHTML = f.length ? '<option value="">-- Elige tu nombre --</option>' + f.sort((a,b)=>a.name.localeCompare(b.name)).map(s=>`<option value='${JSON.stringify({id:s.id, name:s.name, grade:s.grade, phones:s.phones})}'>${escapeHtml(s.name)}</option>`).join('') : '<option value="">No hay alumnos aquí</option>'; };
+        gs.onchange = loadN; await loadN();
+        document.getElementById('studentModal').classList.remove('hidden'); document.getElementById('studentModal').classList.add('flex');
     };
-
+    
     document.getElementById('enterStudent').onclick = () => {
-        const val = document.getElementById('studentNameSelect').value;
-        if (!val) return showToast("Selecciona tu nombre");
+        const val = document.getElementById('studentNameSelect').value; if (!val) return showToast("Selecciona tu nombre","error");
         currentStudent = JSON.parse(val);
-        document.getElementById('studentModal').classList.add('hidden');
-        document.getElementById('welcomeScreen').classList.add('hidden');
-        document.getElementById('studentPanel').classList.remove('hidden');
-        document.getElementById('studentNameSpan').innerText = currentStudent.name;
-        document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
-        // Suscribirse a cambios en tareas, exámenes y resultados
-        const unsubTasks = onSnapshot(tasksRef, () => renderStudentTasks());
-        const unsubExams = onSnapshot(examsRef, () => renderStudentExams());
-        const unsubResults = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
-        renderStudentTasks(); renderStudentExams(); renderStudentGrades();
+        document.getElementById('studentModal').classList.add('hidden'); document.getElementById('welcomeScreen').classList.add('hidden'); document.getElementById('studentPanel').classList.remove('hidden');
+        document.getElementById('studentNameSpan').innerText = currentStudent.name; document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
+        
+        // Cargar vista estudiante
+        onSnapshot(tasksRef, () => renderStudentTasks());
+        onSnapshot(examsRef, () => renderStudentExams());
+        onSnapshot(resultsRef, () => renderStudentGrades());
+        showToast(`¡Hola ${currentStudent.name.split(' ')[0]}!`, "success");
     };
-    document.getElementById('closeStudentModal').onclick = () => document.getElementById('studentModal').classList.add('hidden');
-    document.getElementById('logoutStudentPanel').onclick = () => {
-        document.getElementById('studentPanel').classList.add('hidden');
-        document.getElementById('welcomeScreen').classList.remove('hidden');
-        currentStudent = null;
-    };
+    
+    document.getElementById('closeStudentModal').onclick = () => { document.getElementById('studentModal').classList.add('hidden'); document.getElementById('studentModal').classList.remove('flex'); };
+    document.getElementById('logoutStudentPanel').onclick = () => { document.getElementById('studentPanel').classList.add('hidden'); document.getElementById('welcomeScreen').classList.remove('hidden'); currentStudent = null; if(examTimerInterval) clearInterval(examTimerInterval); };
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
-            btn.classList.add('active', 'bg-indigo-600', 'text-white');
-            document.querySelectorAll('.tab-content').forEach(div => div.classList.add('hidden'));
-            document.getElementById(btn.dataset.tab).classList.remove('hidden');
-        };
-    });
-    document.querySelectorAll('.student-tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.student-tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-600', 'text-white'));
-            btn.classList.add('active', 'bg-emerald-600', 'text-white');
-            document.querySelectorAll('.student-tab-content').forEach(div => div.classList.add('hidden'));
-            document.getElementById(btn.dataset.stab).classList.remove('hidden');
-        };
-    });
+    const setupTabs = (bc, cc) => { document.querySelectorAll(`.${bc}`).forEach(b => { b.onclick = () => { document.querySelectorAll(`.${bc}`).forEach(x => x.classList.remove("active", "bg-indigo-600", "bg-emerald-600", "text-white")); const ac = bc.includes('doc') ? 'bg-indigo-600' : 'bg-emerald-600'; b.classList.add("active", ac, "text-white"); document.querySelectorAll(`.${cc}`).forEach(x => x.classList.add("hidden")); document.getElementById(b.dataset.tab || b.dataset.stab).classList.remove("hidden"); }; }); };
+    setupTabs('tab-btn', 'tab-content'); setupTabs('student-tab-btn', 'student-tab-content');
 
-    // Publicar tarea y demás funciones (sin cambios)
-    document.getElementById('publishTask').onclick = async () => { /* ... */ };
-    document.getElementById('generateTaskDesc').onclick = async () => { /* ... */ };
-    document.getElementById('generateQuestions').onclick = async () => { /* ... */ };
-    document.getElementById('publishExam').onclick = async () => { /* ... */ };
-    document.getElementById('addStudent').onclick = async () => { /* ... */ };
+    document.getElementById('closeAnswersModal')?.addEventListener('click', () => { document.getElementById('viewAnswersModal').classList.add('hidden'); document.getElementById('viewAnswersModal').classList.remove('flex'); });
+    document.getElementById('closeAnswersModalBtn')?.addEventListener('click', () => { document.getElementById('viewAnswersModal').classList.add('hidden'); document.getElementById('viewAnswersModal').classList.remove('flex'); });
+    
+    document.getElementById("refreshStudentTasks")?.addEventListener("click", () => { renderStudentTasks(); showToast("Tareas actualizadas", "info"); });
+    document.getElementById("refreshStudentExams")?.addEventListener("click", () => { renderStudentExams(); showToast("Exámenes actualizados", "info"); });
 
-    // Filtros
-    document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
-    document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
-    document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
-    document.getElementById('filterArea')?.addEventListener('change', () => renderGradesTable());
-    document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
-
-    document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
-        document.getElementById('viewAnswersModal').classList.add('hidden');
-        document.getElementById('viewAnswersModal').classList.remove('flex');
-    });
-
-    function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;') : ''; }
 </script>
 </body>
 </html>
