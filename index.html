@@ -18,6 +18,50 @@
         .dark { background-color: #111827; color: #f3f4f6; }
         .dark .card { background-color: #1f2937; border-color: #374151; }
         .dark input, .dark select, .dark textarea { background-color: #374151; color: #f3f4f6; border-color: #4b5563; }
+        /* Estilo para el slider interactivo */
+        .slider-container {
+            background: #f3f4f6;
+            border-radius: 9999px;
+            padding: 4px;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .slider-container.active {
+            background: #e5e7eb;
+        }
+        .slider-track {
+            background: #cbd5e1;
+            border-radius: 9999px;
+            height: 8px;
+            width: 100%;
+            position: relative;
+        }
+        .slider-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            transition: left 0.05s linear;
+            left: 0%;
+        }
+        .slider-thumb:active { cursor: grabbing; }
+        .slider-thumb i { color: #10b981; font-size: 1.2rem; }
+        .slider-complete {
+            background: #10b981;
+            transition: background 0.3s;
+        }
+        .slider-complete .slider-thumb i { color: white; }
+        .slider-complete .slider-track { background: #34d399; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 transition-colors">
@@ -47,18 +91,31 @@
     </div>
 </div>
 
-<!-- Modal estudiante -->
+<!-- Modal estudiante con selector de grado, nombre y deslizador interactivo -->
 <div id="studentModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
-        <h2 class="text-xl font-bold mb-4">Selecciona tu grado</h2>
+        <h2 class="text-xl font-bold mb-4">Acceso Estudiante</h2>
         <select id="studentGradeSelect" class="w-full border border-gray-300 p-3 rounded-lg mb-3 focus:ring-2 focus:ring-emerald-500"></select>
         <select id="studentNameSelect" class="w-full border border-gray-300 p-3 rounded-lg mb-4 focus:ring-2 focus:ring-emerald-500"></select>
-        <button id="enterStudent" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition">Entrar</button>
+        
+        <!-- Control deslizante interactivo (flecha) -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-2">🔐 Desliza la flecha para ingresar</label>
+            <div id="sliderContainer" class="slider-container relative w-full h-12 bg-gray-100 rounded-full shadow-inner cursor-pointer">
+                <div class="slider-track absolute top-1/2 left-1 transform -translate-y-1/2 w-full h-2 bg-gray-300 rounded-full"></div>
+                <div id="sliderThumb" class="slider-thumb absolute top-1/2 -translate-y-1/2 left-0 w-10 h-10 bg-white rounded-full shadow flex items-center justify-center cursor-grab active:cursor-grabbing transition-all z-10">
+                    <i class="fas fa-arrow-right text-emerald-500 text-lg"></i>
+                </div>
+                <div id="sliderText" class="absolute inset-0 flex items-center justify-center text-gray-500 text-sm pointer-events-none">Desliza →</div>
+            </div>
+        </div>
+        
+        <button id="enterStudent" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-semibold hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>Entrar</button>
         <button id="closeStudentModal" class="w-full text-gray-500 mt-2 text-sm">Cancelar</button>
     </div>
 </div>
 
-<!-- Panel Docente -->
+<!-- Panel Docente (igual que antes) -->
 <div id="teacherPanel" class="hidden min-h-screen bg-gray-50">
     <nav class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -136,7 +193,7 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
-                        <thead><tr class="bg-gray-100 border-b"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
+                        <thead><tr class="bg-gray-100 border-b"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th><tr></thead>
                         <tbody id="gradesTableBody"></tbody>
                     </table>
                 </div>
@@ -183,7 +240,7 @@
     </div>
 </div>
 
-<!-- Modales -->
+<!-- Modales de examen y ver respuestas -->
 <div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
         <h2 id="examTakeTitle" class="text-xl font-bold mb-4"></h2>
@@ -229,6 +286,112 @@
     let currentStudent = null;
     let allStudents = [], allTasks = [], allExams = [], allResults = [];
     let unsubStudents, unsubTasks, unsubExams, unsubResults;
+
+    let sliderDragging = false;
+    let sliderStartX = 0;
+    let sliderThumbLeft = 0;
+    const sliderContainer = document.getElementById('sliderContainer');
+    const sliderThumb = document.getElementById('sliderThumb');
+    const enterBtn = document.getElementById('enterStudent');
+
+    function initSlider() {
+        if (!sliderContainer || !sliderThumb) return;
+        const containerRect = sliderContainer.getBoundingClientRect();
+        const maxLeft = containerRect.width - sliderThumb.offsetWidth;
+
+        const onMouseMove = (e) => {
+            if (!sliderDragging) return;
+            let clientX = e.clientX;
+            let newLeft = clientX - sliderStartX;
+            newLeft = Math.min(maxLeft, Math.max(0, newLeft));
+            sliderThumb.style.left = newLeft + 'px';
+            sliderThumbLeft = newLeft;
+            // Actualizar texto y botón
+            const percent = (newLeft / maxLeft) * 100;
+            if (percent >= 98) {
+                sliderContainer.classList.add('slider-complete');
+                enterBtn.disabled = false;
+                document.getElementById('sliderText').style.opacity = '0';
+            } else {
+                sliderContainer.classList.remove('slider-complete');
+                enterBtn.disabled = true;
+                document.getElementById('sliderText').style.opacity = '1';
+            }
+        };
+        const onMouseUp = () => {
+            if (!sliderDragging) return;
+            sliderDragging = false;
+            const maxLeft2 = sliderContainer.getBoundingClientRect().width - sliderThumb.offsetWidth;
+            const percent = (sliderThumbLeft / maxLeft2) * 100;
+            if (percent < 98) {
+                sliderThumb.style.left = '0px';
+                sliderThumbLeft = 0;
+                sliderContainer.classList.remove('slider-complete');
+                enterBtn.disabled = true;
+                document.getElementById('sliderText').style.opacity = '1';
+            }
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+        sliderThumb.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            sliderDragging = true;
+            sliderStartX = e.clientX - sliderThumbLeft;
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+        // Toque para móviles
+        sliderThumb.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            sliderDragging = true;
+            sliderStartX = e.touches[0].clientX - sliderThumbLeft;
+            document.addEventListener('touchmove', onTouchMove);
+            document.addEventListener('touchend', onTouchEnd);
+        });
+        const onTouchMove = (e) => {
+            if (!sliderDragging) return;
+            let clientX = e.touches[0].clientX;
+            let newLeft = clientX - sliderStartX;
+            const maxLeft = sliderContainer.getBoundingClientRect().width - sliderThumb.offsetWidth;
+            newLeft = Math.min(maxLeft, Math.max(0, newLeft));
+            sliderThumb.style.left = newLeft + 'px';
+            sliderThumbLeft = newLeft;
+            const percent = (newLeft / maxLeft) * 100;
+            if (percent >= 98) {
+                sliderContainer.classList.add('slider-complete');
+                enterBtn.disabled = false;
+                document.getElementById('sliderText').style.opacity = '0';
+            } else {
+                sliderContainer.classList.remove('slider-complete');
+                enterBtn.disabled = true;
+                document.getElementById('sliderText').style.opacity = '1';
+            }
+        };
+        const onTouchEnd = () => {
+            sliderDragging = false;
+            const maxLeft = sliderContainer.getBoundingClientRect().width - sliderThumb.offsetWidth;
+            const percent = (sliderThumbLeft / maxLeft) * 100;
+            if (percent < 98) {
+                sliderThumb.style.left = '0px';
+                sliderThumbLeft = 0;
+                sliderContainer.classList.remove('slider-complete');
+                enterBtn.disabled = true;
+                document.getElementById('sliderText').style.opacity = '1';
+            }
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend', onTouchEnd);
+        };
+    }
+
+    function resetSlider() {
+        if (sliderThumb) {
+            sliderThumb.style.left = '0px';
+            sliderThumbLeft = 0;
+            sliderContainer.classList.remove('slider-complete');
+            enterBtn.disabled = true;
+            document.getElementById('sliderText').style.opacity = '1';
+        }
+    }
 
     function showToast(msg, type='info') {
         const toast = document.getElementById('toast');
@@ -440,7 +603,7 @@
         modal.classList.add('flex');
     }
 
-    // Estudiante funciones (resumidas pero funcionales)
+    // Funciones del estudiante (resumidas pero completas)
     function renderStudentTasks() {
         const container = document.getElementById('studentTasksList');
         if (!container || !currentStudent) return;
@@ -546,7 +709,6 @@
             document.getElementById('teacherPanel').classList.remove('hidden');
             populateSelects();
             loadData();
-            // Auto-seleccionar primer grado para estudiantes (si hay alguno)
             setTimeout(() => {
                 const gradeSelect = document.getElementById('filterStudentsGrade');
                 if (gradeSelect && gradeSelect.options.length > 1 && !gradeSelect.value) {
@@ -567,6 +729,7 @@
     document.getElementById('studentBtn').onclick = async () => {
         await seedStudents();
         populateSelects();
+        resetSlider();
         document.getElementById('studentModal').classList.remove('hidden');
         const gradeSelect = document.getElementById('studentGradeSelect');
         const nameSelect = document.getElementById('studentNameSelect');
@@ -577,10 +740,12 @@
         };
         gradeSelect.onchange = loadNames;
         await loadNames();
+        initSlider(); // Inicializar slider después de mostrar el modal
     };
     document.getElementById('enterStudent').onclick = () => {
         const val = document.getElementById('studentNameSelect').value;
         if (!val) return showToast("Selecciona tu nombre");
+        if (enterBtn.disabled) return showToast("Debes deslizar la flecha hasta el final", "warning");
         currentStudent = JSON.parse(val);
         document.getElementById('studentModal').classList.add('hidden');
         document.getElementById('welcomeScreen').classList.add('hidden');
@@ -593,7 +758,10 @@
         const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
         window.studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
     };
-    document.getElementById('closeStudentModal').onclick = () => document.getElementById('studentModal').classList.add('hidden');
+    document.getElementById('closeStudentModal').onclick = () => {
+        document.getElementById('studentModal').classList.add('hidden');
+        resetSlider();
+    };
     document.getElementById('logoutStudentPanel').onclick = () => {
         document.getElementById('studentPanel').classList.add('hidden');
         document.getElementById('welcomeScreen').classList.remove('hidden');
@@ -619,37 +787,22 @@
         };
     });
 
-    // Publicar tarea
+    // Publicar tarea (resumido pero completo)
     document.getElementById('publishTask').onclick = async () => {
         const title = document.getElementById('taskTitle').value.trim();
         if (!title) { showToast("El título es obligatorio", "error"); return; }
         const btn = document.getElementById('publishTask');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div> Publicando...';
+        btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Publicando...';
         try {
             let fileURL = null;
             const file = document.getElementById('taskFile').files[0];
-            if (file) {
-                const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`);
-                await uploadBytes(storageRef, file);
-                fileURL = await getDownloadURL(storageRef);
-            }
+            if (file) { const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`); await uploadBytes(storageRef, file); fileURL = await getDownloadURL(storageRef); }
             await addDoc(tasksRef, {
-                title,
-                grade: document.getElementById('taskGrade').value || null,
-                area: document.getElementById('taskArea').value || null,
-                description: document.getElementById('taskDesc').value || null,
-                fileURL,
-                link: document.getElementById('taskLink').value || null,
-                createdAt: serverTimestamp()
+                title, grade: document.getElementById('taskGrade').value || null, area: document.getElementById('taskArea').value || null,
+                description: document.getElementById('taskDesc').value || null, fileURL, link: document.getElementById('taskLink').value || null, createdAt: serverTimestamp()
             });
             showToast("Tarea publicada correctamente", "success");
-            document.getElementById('taskTitle').value = '';
-            document.getElementById('taskDesc').value = '';
-            document.getElementById('taskFile').value = '';
-            document.getElementById('taskLink').value = '';
-            document.getElementById('taskGrade').value = '';
-            document.getElementById('taskArea').value = '';
+            document.getElementById('taskTitle').value = ''; document.getElementById('taskDesc').value = ''; document.getElementById('taskFile').value = ''; document.getElementById('taskLink').value = ''; document.getElementById('taskGrade').value = ''; document.getElementById('taskArea').value = '';
         } catch (error) { showToast("Error al publicar tarea", "error"); }
         finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
     };
@@ -657,10 +810,9 @@
     // Generar descripción con IA
     document.getElementById('generateTaskDesc').onclick = async () => {
         const topic = document.getElementById('taskTitle').value;
-        if (!topic) return showToast("Escribe un título para generar la descripción");
+        if (!topic) return showToast("Escribe un título");
         const btn = document.getElementById('generateTaskDesc');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div>';
+        btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
         try {
             const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
                 method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
@@ -673,14 +825,13 @@
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Generar IA'; }
     };
 
-    // Generar preguntas con IA (similar al original)
+    // Generar preguntas con IA
     document.getElementById('generateQuestions').onclick = async () => {
         const topic = document.getElementById('examTopic').value;
         const num = parseInt(document.getElementById('numQuestions').value);
         if (!topic) return showToast("Escribe el tema");
         const btn = document.getElementById('generateQuestions');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner"></div>';
+        btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
         try {
             const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
                 method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
@@ -699,12 +850,7 @@
                     <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
                     <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
                     <div class="grid grid-cols-2 gap-2">${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}</div>
-                    <select class="correct-option mt-2 border p-2 rounded w-full">
-                        <option value="0" ${q.correct===0?'selected':''}>Opción 1 correcta</option>
-                        <option value="1" ${q.correct===1?'selected':''}>Opción 2 correcta</option>
-                        <option value="2" ${q.correct===2?'selected':''}>Opción 3 correcta</option>
-                        <option value="3" ${q.correct===3?'selected':''}>Opción 4 correcta</option>
-                    </select>
+                    <select class="correct-option mt-2 border p-2 rounded w-full"><option value="0" ${q.correct===0?'selected':''}>Opción 1</option><option value="1" ${q.correct===1?'selected':''}>Opción 2</option><option value="2" ${q.correct===2?'selected':''}>Opción 3</option><option value="3" ${q.correct===3?'selected':''}>Opción 4</option></select>
                 `;
                 editor.appendChild(div);
             });
@@ -731,10 +877,7 @@
         if (!title || !grade || !area || questions.length === 0) return showToast("Complete todos los campos y al menos una pregunta");
         await addDoc(examsRef, { title, grade, area, questions, createdAt: serverTimestamp() });
         showToast("Examen publicado");
-        document.getElementById('examTitle').value = '';
-        document.getElementById('examTopic').value = '';
-        document.getElementById('questionsEditor').innerHTML = '';
-        document.getElementById('numQuestions').value = '5';
+        document.getElementById('examTitle').value = ''; document.getElementById('examTopic').value = ''; document.getElementById('questionsEditor').innerHTML = ''; document.getElementById('numQuestions').value = '5';
     };
 
     // Agregar estudiante con duplicado
@@ -746,13 +889,12 @@
         if (allStudents.some(s => s.name === name && s.grade === grade)) { showToast("Ya existe un estudiante con ese nombre y grado", "error"); return; }
         await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] });
         showToast("Estudiante agregado");
-        document.getElementById('newStudentName').value = '';
-        document.getElementById('newStudentPhone').value = '';
+        document.getElementById('newStudentName').value = ''; document.getElementById('newStudentPhone').value = '';
         const selectedGrade = document.getElementById('filterStudentsGrade').value;
         if (selectedGrade === grade) renderStudentsList();
     };
 
-    // Filtros
+    // Filtros y refrescos
     document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
     document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
     document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
