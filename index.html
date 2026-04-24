@@ -208,7 +208,10 @@
                     <button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar estudiante</button>
                 </div>
                 <hr class="my-4">
-                <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-4"></select>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por grado:</label>
+                    <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg"></select>
+                </div>
                 <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </div>
@@ -338,7 +341,21 @@
 
     // Cargar datos en tiempo real
     function loadData() {
-        onSnapshot(studentsRef, snap => { allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderStudentsList(); renderGradesTable(); });
+        onSnapshot(studentsRef, snap => { 
+            allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
+            renderStudentsList(); 
+            renderGradesTable(); 
+            // También actualizar el selector de estudiantes en el modal de estudiante si está abierto
+            if (document.getElementById('studentModal') && document.getElementById('studentModal').classList.contains('flex')) {
+                const gradeSelect = document.getElementById('studentGradeSelect');
+                if (gradeSelect && gradeSelect.value) {
+                    const grade = gradeSelect.value;
+                    const filtered = allStudents.filter(s => s.grade === grade);
+                    const nameSelect = document.getElementById('studentNameSelect');
+                    if (nameSelect) nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + filtered.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join('');
+                }
+            }
+        });
         onSnapshot(tasksRef, snap => { allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasksList(); });
         onSnapshot(examsRef, snap => { allExams = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderExamsList(); });
         onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
@@ -381,8 +398,16 @@
     function renderStudentsList() {
         const grade = document.getElementById('filterStudentsGrade')?.value;
         const container = document.getElementById('studentsList');
-        if (!grade) { container.innerHTML = '<p class="text-gray-500">Selecciona un grado</p>'; return; }
+        if (!container) return;
+        if (!grade) {
+            container.innerHTML = '<p class="text-gray-500 text-center">Selecciona un grado para ver la lista de estudiantes.</p>';
+            return;
+        }
         const filtered = allStudents.filter(s => s.grade === grade);
+        if (filtered.length === 0) {
+            container.innerHTML = `<p class="text-gray-500 text-center">No hay estudiantes en el grado ${escapeHtml(grade)}.</p>`;
+            return;
+        }
         container.innerHTML = filtered.map(s => `
             <div class="bg-white rounded-lg shadow-sm p-3 flex justify-between items-center border">
                 <div><strong>${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-500">📞 ${s.phones?.join(', ') || ''}</span></div>
@@ -402,7 +427,7 @@
             const exam = allExams.find(e => e.id === r.examId);
             return student?.grade === gradeFilter && exam?.area === areaFilter;
         });
-        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></td>'; return; }
+        if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></tr>'; return; }
         tbody.innerHTML = filtered.map(r => {
             const student = allStudents.find(s => s.id === r.studentId);
             const studentName = student?.name || 'Desconocido';
