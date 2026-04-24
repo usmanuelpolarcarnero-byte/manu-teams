@@ -8,55 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        body {
-            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        .spinner {
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top: 3px solid #ffffff;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-        }
+        body { font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .spinner { border: 3px solid rgba(255,255,255,0.3); border-top: 3px solid #ffffff; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background-color: #1f2937;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-        }
+        .toast { position: fixed; bottom: 24px; right: 24px; background-color: #1f2937; color: white; padding: 12px 20px; border-radius: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 1000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; }
-        .card-hover {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.02);
-        }
-        .dark {
-            background-color: #111827;
-            color: #f3f4f6;
-        }
-        .dark .card {
-            background-color: #1f2937;
-            border-color: #374151;
-        }
-        .dark input, .dark select, .dark textarea {
-            background-color: #374151;
-            color: #f3f4f6;
-            border-color: #4b5563;
-        }
+        .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.02); }
+        .dark { background-color: #111827; color: #f3f4f6; }
+        .dark .card { background-color: #1f2937; border-color: #374151; }
+        .dark input, .dark select, .dark textarea { background-color: #374151; color: #f3f4f6; border-color: #4b5563; }
+        .btn-loading { opacity: 0.7; pointer-events: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 transition-colors">
@@ -208,10 +170,9 @@
                     <button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar estudiante</button>
                 </div>
                 <hr class="my-4">
-                <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por grado:</label>
-                    <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg"></select>
-                </div>
+                <label class="font-semibold block mb-2">Filtrar por grado:</label>
+                <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-2"></select>
+                <button id="refreshStudentsListBtn" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-sm mb-4">Refrescar lista</button>
                 <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </div>
@@ -292,6 +253,7 @@
     let currentUser = null;
     let currentStudent = null;
     let allStudents = [], allTasks = [], allExams = [], allResults = [];
+    let unsubStudents = null, unsubTasks = null, unsubExams = null, unsubResults = null;
 
     // Helper toast
     function showToast(msg, type='info') {
@@ -309,12 +271,20 @@
         const selects = ['taskGrade', 'examGrade', 'newStudentGrade', 'filterStudentsGrade', 'filterGrade', 'studentGradeSelect'];
         selects.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.innerHTML = '<option value="">-- Seleccionar --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+            if (el) {
+                const currentVal = el.value;
+                el.innerHTML = '<option value="">-- Seleccionar --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+                if (currentVal && allGrades.includes(currentVal)) el.value = currentVal;
+            }
         });
         const areaSelects = ['taskArea', 'examArea', 'filterArea'];
         areaSelects.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.innerHTML = '<option value="">-- Seleccionar --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
+            if (el) {
+                const currentVal = el.value;
+                el.innerHTML = '<option value="">-- Seleccionar --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
+                if (currentVal && allAreas.includes(currentVal)) el.value = currentVal;
+            }
         });
         // Para filtros de tareas
         const filterGrade = document.getElementById('filterTasksGrade');
@@ -339,26 +309,21 @@
         }
     }
 
-    // Cargar datos en tiempo real
+    // Cargar datos en tiempo real con gestión de suscripciones
     function loadData() {
-        onSnapshot(studentsRef, snap => { 
+        if (unsubStudents) unsubStudents();
+        if (unsubTasks) unsubTasks();
+        if (unsubExams) unsubExams();
+        if (unsubResults) unsubResults();
+        
+        unsubStudents = onSnapshot(studentsRef, snap => { 
             allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
             renderStudentsList(); 
             renderGradesTable(); 
-            // También actualizar el selector de estudiantes en el modal de estudiante si está abierto
-            if (document.getElementById('studentModal') && document.getElementById('studentModal').classList.contains('flex')) {
-                const gradeSelect = document.getElementById('studentGradeSelect');
-                if (gradeSelect && gradeSelect.value) {
-                    const grade = gradeSelect.value;
-                    const filtered = allStudents.filter(s => s.grade === grade);
-                    const nameSelect = document.getElementById('studentNameSelect');
-                    if (nameSelect) nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + filtered.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join('');
-                }
-            }
         });
-        onSnapshot(tasksRef, snap => { allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasksList(); });
-        onSnapshot(examsRef, snap => { allExams = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderExamsList(); });
-        onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
+        unsubTasks = onSnapshot(tasksRef, snap => { allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasksList(); });
+        unsubExams = onSnapshot(examsRef, snap => { allExams = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderExamsList(); });
+        unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
     }
 
     // Funciones de renderizado docente
@@ -396,16 +361,17 @@
         document.querySelectorAll('.delete-exam').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(examsRef, btn.dataset.id)); showToast("Examen eliminado"); });
     }
     function renderStudentsList() {
-        const grade = document.getElementById('filterStudentsGrade')?.value;
         const container = document.getElementById('studentsList');
-        if (!container) return;
-        if (!grade) {
-            container.innerHTML = '<p class="text-gray-500 text-center">Selecciona un grado para ver la lista de estudiantes.</p>';
+        const gradeSelect = document.getElementById('filterStudentsGrade');
+        if (!container || !gradeSelect) return;
+        const selectedGrade = gradeSelect.value;
+        if (!selectedGrade) {
+            container.innerHTML = '<p class="text-gray-500 col-span-full text-center">Selecciona un grado para ver los estudiantes</p>';
             return;
         }
-        const filtered = allStudents.filter(s => s.grade === grade);
+        const filtered = allStudents.filter(s => s.grade === selectedGrade);
         if (filtered.length === 0) {
-            container.innerHTML = `<p class="text-gray-500 text-center">No hay estudiantes en el grado ${escapeHtml(grade)}.</p>`;
+            container.innerHTML = `<p class="text-gray-500 col-span-full text-center">No hay estudiantes en el grado ${escapeHtml(selectedGrade)}</p>`;
             return;
         }
         container.innerHTML = filtered.map(s => `
@@ -603,7 +569,6 @@
             showToast(`Nota: ${grade} (${correct}/${exam.questions.length})`, "success");
             modal.classList.add('hidden');
             modal.classList.remove('flex');
-            // Descargar automáticamente el reporte
             await downloadPDFReport(resultRef.id, currentStudent.name, exam.id);
             if (currentStudent.phones && currentStudent.phones[0]) {
                 if (confirm("¿Enviar resultado por WhatsApp a tus padres?")) {
@@ -644,6 +609,11 @@
     document.getElementById('logoutTeacherPanel').onclick = () => {
         document.getElementById('teacherPanel').classList.add('hidden');
         document.getElementById('welcomeScreen').classList.remove('hidden');
+        // Limpiar suscripciones
+        if (unsubStudents) unsubStudents();
+        if (unsubTasks) unsubTasks();
+        if (unsubExams) unsubExams();
+        if (unsubResults) unsubResults();
     };
     document.getElementById('studentBtn').onclick = async () => {
         await seedStudents();
@@ -668,16 +638,19 @@
         document.getElementById('studentPanel').classList.remove('hidden');
         document.getElementById('studentNameSpan').innerText = currentStudent.name;
         document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
-        // Suscribirse a cambios
-        const unsubTasks = onSnapshot(tasksRef, () => renderStudentTasks());
-        const unsubExams = onSnapshot(examsRef, () => renderStudentExams());
-        const unsubResults = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
         renderStudentTasks(); renderStudentExams(); renderStudentGrades();
+        // Suscribirse a cambios en tiempo real para el estudiante
+        const unsubTasksStud = onSnapshot(tasksRef, () => renderStudentTasks());
+        const unsubExamsStud = onSnapshot(examsRef, () => renderStudentExams());
+        const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
+        // Guardar para limpiar después
+        window.studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
     };
     document.getElementById('closeStudentModal').onclick = () => document.getElementById('studentModal').classList.add('hidden');
     document.getElementById('logoutStudentPanel').onclick = () => {
         document.getElementById('studentPanel').classList.add('hidden');
         document.getElementById('welcomeScreen').classList.remove('hidden');
+        if (window.studentUnsubs) window.studentUnsubs.forEach(unsub => unsub());
         currentStudent = null;
     };
 
@@ -699,23 +672,18 @@
         };
     });
 
-    // Publicar tarea (sin validaciones estrictas)
+    // Publicar tarea
     document.getElementById('publishTask').onclick = async () => {
         const title = document.getElementById('taskTitle').value.trim();
-        if (!title) {
-            showToast("El título es obligatorio", "error");
-            return;
-        }
+        if (!title) { showToast("El título es obligatorio", "error"); return; }
         const grade = document.getElementById('taskGrade').value;
         const area = document.getElementById('taskArea').value;
         const desc = document.getElementById('taskDesc').value;
         const file = document.getElementById('taskFile').files[0];
         const link = document.getElementById('taskLink').value;
-        
         const btn = document.getElementById('publishTask');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Publicando...';
-        
         try {
             let fileURL = null;
             if (file) {
@@ -723,30 +691,16 @@
                 await uploadBytes(storageRef, file);
                 fileURL = await getDownloadURL(storageRef);
             }
-            await addDoc(tasksRef, { 
-                title, 
-                grade: grade || null, 
-                area: area || null, 
-                description: desc || null, 
-                fileURL, 
-                link: link || null, 
-                createdAt: serverTimestamp() 
-            });
+            await addDoc(tasksRef, { title, grade: grade || null, area: area || null, description: desc || null, fileURL, link: link || null, createdAt: serverTimestamp() });
             showToast("Tarea publicada correctamente", "success");
-            // Limpiar campos
             document.getElementById('taskTitle').value = '';
             document.getElementById('taskDesc').value = '';
             document.getElementById('taskFile').value = '';
             document.getElementById('taskLink').value = '';
             document.getElementById('taskGrade').value = '';
             document.getElementById('taskArea').value = '';
-        } catch (error) {
-            console.error(error);
-            showToast("Error al publicar tarea", "error");
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = "Publicar Tarea";
-        }
+        } catch (error) { showToast("Error al publicar tarea", "error"); }
+        finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
     };
 
     // Generar descripción de tarea con IA
@@ -758,8 +712,7 @@
         btn.innerHTML = '<div class="spinner"></div>';
         try {
             const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
                 body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 })
             });
             const data = await res.json();
@@ -780,8 +733,7 @@
         btn.innerHTML = '<div class="spinner"></div>';
         try {
             const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
                 body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }], temperature: 0.7 })
             });
             const data = await res.json();
@@ -837,19 +789,25 @@
         document.getElementById('numQuestions').value = '5';
     };
 
-    // Agregar estudiante
+    // Agregar estudiante con verificación de duplicados
     document.getElementById('addStudent').onclick = async () => {
         const name = document.getElementById('newStudentName').value.trim().toUpperCase();
         const grade = document.getElementById('newStudentGrade').value;
         const phone = document.getElementById('newStudentPhone').value.trim();
         if (!name || !grade) return showToast("Nombre y grado requeridos");
+        // Verificar si ya existe un estudiante con el mismo nombre y grado
+        const existing = allStudents.some(s => s.name === name && s.grade === grade);
+        if (existing) { showToast("Ya existe un estudiante con ese nombre y grado", "error"); return; }
         await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] });
         showToast("Estudiante agregado");
         document.getElementById('newStudentName').value = '';
         document.getElementById('newStudentPhone').value = '';
+        // Forzar actualización de la lista si el grado seleccionado es el mismo
+        const selectedGrade = document.getElementById('filterStudentsGrade').value;
+        if (selectedGrade === grade) renderStudentsList();
     };
 
-    // Filtros
+    // Filtros y refrescos
     document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
     document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
     document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
@@ -857,6 +815,7 @@
     document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
     document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
     document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
+    document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
 
     // Cerrar modal de respuestas
     document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
