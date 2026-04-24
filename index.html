@@ -15,26 +15,10 @@
         .toast.show { opacity: 1; }
         .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.02); }
-        .dark { background-color: #111827; color: #f3f4f6; }
-        .dark .card { background-color: #1f2937; border-color: #374151; }
-        .dark input, .dark select, .dark textarea { background-color: #374151; color: #f3f4f6; border-color: #4b5563; }
-        /* Slider */
-        .slider-container {
-            background: #f3f4f6;
-            border-radius: 9999px;
-            padding: 4px;
-            position: relative;
-            cursor: pointer;
-            user-select: none;
-            transition: background 0.2s;
-        }
-        .slider-container.active { background: #e5e7eb; }
+        /* Slider interactivo */
+        .slider-container { background: #f3f4f6; border-radius: 9999px; padding: 4px; position: relative; cursor: pointer; user-select: none; transition: background 0.2s; }
         .slider-track { background: #cbd5e1; border-radius: 9999px; height: 8px; width: 100%; position: relative; }
-        .slider-thumb {
-            position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px;
-            background: white; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            display: flex; align-items: center; justify-content: center; cursor: grab; transition: left 0.05s linear; left: 0%;
-        }
+        .slider-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; background: white; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: grab; transition: left 0.05s linear; left: 0%; }
         .slider-thumb:active { cursor: grabbing; }
         .slider-thumb i { color: #10b981; font-size: 1.2rem; }
         .slider-complete { background: #10b981; }
@@ -42,13 +26,13 @@
         .slider-complete .slider-track { background: #34d399; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 transition-colors">
+<body class="bg-gray-50 text-gray-800">
 
 <div id="toast" class="toast"></div>
 
 <!-- Pantalla de bienvenida -->
 <div id="welcomeScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-50 to-blue-50">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center border border-gray-100">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
         <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <i class="fas fa-brain text-3xl text-indigo-600"></i>
         </div>
@@ -59,7 +43,7 @@
     </div>
 </div>
 
-<!-- Modales -->
+<!-- Modal docente -->
 <div id="teacherModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
         <h2 class="text-xl font-bold mb-4">Acceso Docente</h2>
@@ -69,6 +53,7 @@
     </div>
 </div>
 
+<!-- Modal estudiante con slider -->
 <div id="studentModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
     <div class="bg-white rounded-2xl p-6 w-96 shadow-xl">
         <h2 class="text-xl font-bold mb-4">Acceso Estudiante</h2>
@@ -99,51 +84,100 @@
     </nav>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div class="flex flex-wrap gap-2 border-b border-gray-200 mb-6">
-            <button class="tab-btn active bg-indigo-600 text-white px-5 py-2 rounded-t-lg" data-tab="tasksTab">📝 Tareas</button>
-            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-tab="examsTab">📋 Exámenes</button>
-            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-tab="gradesTab">📊 Calificaciones</button>
-            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-tab="studentsTab">👥 Estudiantes</button>
+            <button class="tab-btn active bg-indigo-600 text-white px-5 py-2 rounded-t-lg transition" data-tab="tasksTab">📝 Tareas</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="examsTab">📋 Exámenes</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="gradesTab">📊 Calificaciones</button>
+            <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="studentsTab">👥 Estudiantes</button>
         </div>
+
         <!-- Tareas -->
         <div id="tasksTab" class="tab-content">
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
-                <h3 class="text-lg font-bold mb-4">Nueva Tarea</h3>
+                <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input type="text" id="taskTitle" placeholder="Título (obligatorio)" class="border p-3 rounded-lg">
-                    <select id="taskGrade" class="border p-3 rounded-lg"></select>
-                    <select id="taskArea" class="border p-3 rounded-lg"></select>
-                    <div class="flex gap-2"><textarea id="taskDesc" placeholder="Descripción" class="border p-3 rounded-lg flex-1" rows="3"></textarea><button id="generateTaskDesc" class="bg-purple-600 text-white px-4 rounded-lg"><i class="fas fa-magic"></i> Generar IA</button></div>
-                    <div class="md:col-span-2 flex flex-col md:flex-row gap-4"><input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="border p-2 rounded-lg flex-1"><input type="text" id="taskLink" placeholder="https://..." class="border p-2 rounded-lg flex-1"></div>
-                    <button id="publishTask" class="md:col-span-2 bg-indigo-600 text-white font-semibold py-3 rounded-lg">Publicar Tarea</button>
+                    <input type="text" id="taskTitle" placeholder="Título (obligatorio)" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    <select id="taskGrade" class="border border-gray-300 p-3 rounded-lg"><option value="">-- Grado (opcional) --</option></select>
+                    <select id="taskArea" class="border border-gray-300 p-3 rounded-lg"><option value="">-- Área (opcional) --</option></select>
+                    <div class="flex gap-2">
+                        <textarea id="taskDesc" placeholder="Descripción (opcional)" class="border border-gray-300 p-3 rounded-lg flex-1" rows="3"></textarea>
+                        <button id="generateTaskDesc" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition"><i class="fas fa-magic"></i> Generar IA</button>
+                    </div>
+                    <div class="md:col-span-2 flex flex-col md:flex-row gap-4">
+                        <div class="flex-1"><label class="block text-sm font-medium text-gray-700 mb-1">Archivo guía (PDF, Word, TXT)</label><input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="w-full border border-gray-300 p-2 rounded-lg"></div>
+                        <div class="flex-1"><label class="block text-sm font-medium text-gray-700 mb-1">Enlace (YouTube, web)</label><input type="text" id="taskLink" placeholder="https://..." class="w-full border border-gray-300 p-2 rounded-lg"></div>
+                    </div>
+                    <button id="publishTask" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition shadow-md">Publicar Tarea</button>
                 </div>
             </div>
-            <div class="flex gap-3 mb-4"><select id="filterTasksGrade" class="border p-2 rounded-lg"></select><select id="filterTasksArea" class="border p-2 rounded-lg"></select><button id="refreshTasks" class="bg-gray-500 text-white px-3 py-1 rounded-lg">Refrescar</button></div>
+            <h3 class="font-bold text-lg mb-3">Tareas publicadas</h3>
+            <div class="flex gap-3 mb-4">
+                <select id="filterTasksGrade" class="border border-gray-300 p-2 rounded-lg"></select>
+                <select id="filterTasksArea" class="border border-gray-300 p-2 rounded-lg"></select>
+                <button id="refreshTasks" class="bg-gray-500 text-white px-3 py-1 rounded-lg">Refrescar</button>
+            </div>
             <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
+
         <!-- Exámenes -->
         <div id="examsTab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
-                <h3 class="text-lg font-bold mb-4">Crear Examen con IA</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4"><input type="text" id="examTitle" placeholder="Título" class="border p-3 rounded-lg"><select id="examGrade" class="border p-3 rounded-lg"></select><select id="examArea" class="border p-3 rounded-lg"></select></div>
-                <div class="flex flex-col md:flex-row gap-4 mb-4"><textarea id="examTopic" placeholder="Tema" class="border p-3 rounded-lg flex-1" rows="2"></textarea><div class="bg-gray-50 p-3 rounded-lg flex items-center gap-2"><label>Nº preguntas:</label><input type="number" id="numQuestions" value="5" min="1" class="border p-2 rounded w-20"><button id="generateQuestions" class="bg-purple-600 text-white px-4 py-2 rounded-lg"><i class="fas fa-bolt"></i> Generar IA</button></div></div>
+                <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-robot text-purple-500 mr-2"></i>Crear Examen con IA</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <input type="text" id="examTitle" placeholder="Título" class="border border-gray-300 p-3 rounded-lg">
+                    <select id="examGrade" class="border border-gray-300 p-3 rounded-lg"></select>
+                    <select id="examArea" class="border border-gray-300 p-3 rounded-lg"></select>
+                </div>
+                <div class="flex flex-col md:flex-row gap-4 mb-4">
+                    <textarea id="examTopic" placeholder="Describe el tema para generar preguntas" class="border border-gray-300 p-3 rounded-lg flex-1" rows="2"></textarea>
+                    <div class="bg-gray-50 p-3 rounded-lg flex items-center gap-2">
+                        <label class="font-semibold">Nº preguntas:</label>
+                        <input type="number" id="numQuestions" value="5" min="1" class="border p-2 rounded w-20">
+                        <button id="generateQuestions" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-bolt"></i> Generar IA</button>
+                    </div>
+                </div>
                 <div id="questionsEditor" class="space-y-3 mb-4 max-h-96 overflow-auto"></div>
-                <button id="publishExam" class="bg-emerald-600 text-white font-semibold py-3 rounded-lg w-full">Publicar Examen</button>
+                <button id="publishExam" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg w-full transition shadow-md">Publicar Examen</button>
+            </div>
+            <h3 class="font-bold text-lg mb-3">Exámenes activos</h3>
+            <div class="flex gap-3 mb-4">
+                <select id="filterExamsGrade" class="border p-2 rounded-lg"></select>
+                <select id="filterExamsArea" class="border p-2 rounded-lg"></select>
+                <button id="refreshExamsListBtn" class="bg-gray-500 text-white px-3 py-1 rounded-lg">Refrescar</button>
             </div>
             <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
-        <!-- Calificaciones -->
+
+        <!-- Calificaciones (docente) -->
         <div id="gradesTab" class="tab-content hidden">
-            <div class="bg-white rounded-xl shadow-sm p-6">
-                <div class="flex flex-col sm:flex-row gap-4 mb-4"><select id="filterGrade" class="border p-2 rounded-lg flex-1"></select><select id="filterArea" class="border p-2 rounded-lg flex-1"></select><button id="refreshGrades" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">Refrescar</button></div>
-                <div class="overflow-x-auto"><table class="w-full border-collapse"><thead><tr class="bg-gray-100 border-b"><th>Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead><tbody id="gradesTableBody"></tbody></table></div>
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-4">
+                <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                    <select id="filterGrade" class="border p-2 rounded-lg flex-1"></select>
+                    <select id="filterArea" class="border p-2 rounded-lg flex-1"></select>
+                    <button id="refreshGrades" class="bg-indigo-600 text-white px-4 py-2 rounded-lg">Refrescar</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse">
+                        <thead><tr class="bg-gray-100 border-b"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
+                        <tbody id="gradesTableBody"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
         <!-- Estudiantes -->
         <div id="studentsTab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-bold mb-4">Agregar estudiante</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6"><input type="text" id="newStudentName" placeholder="Apellidos y nombres" class="border p-3 rounded-lg"><select id="newStudentGrade" class="border p-3 rounded-lg"></select><input type="text" id="newStudentPhone" placeholder="Teléfono" class="border p-3 rounded-lg"><button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar</button></div>
-                <hr class="my-4"><label class="font-semibold">Filtrar por grado:</label><select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-2"></select><button id="refreshStudentsListBtn" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-sm mb-4">Refrescar lista</button>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+                    <input type="text" id="newStudentName" placeholder="Apellidos y nombres" class="border p-3 rounded-lg">
+                    <select id="newStudentGrade" class="border p-3 rounded-lg"></select>
+                    <input type="text" id="newStudentPhone" placeholder="Teléfono" class="border p-3 rounded-lg">
+                    <button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar estudiante</button>
+                </div>
+                <hr class="my-4">
+                <label class="font-semibold block mb-2">Filtrar por grado:</label>
+                <select id="filterStudentsGrade" class="w-full border p-3 rounded-lg mb-2"></select>
+                <button id="refreshStudentsListBtn" class="bg-indigo-500 text-white px-3 py-1 rounded-lg text-sm mb-4">Refrescar lista</button>
                 <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
             </div>
         </div>
@@ -154,7 +188,7 @@
 <div id="studentPanel" class="hidden min-h-screen bg-gray-50">
     <nav class="bg-white shadow-md border-b sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3"><i class="fas fa-user-graduate text-emerald-600 text-xl"></i><span id="studentNameSpan" class="font-bold"></span><span id="studentGradeSpan" class="text-sm"></span></div>
+            <div class="flex items-center gap-3"><i class="fas fa-user-graduate text-emerald-600 text-xl"></i><span id="studentNameSpan" class="font-bold text-gray-800"></span><span id="studentGradeSpan" class="text-sm text-gray-500"></span></div>
             <button id="logoutStudentPanel" class="bg-red-500 text-white px-4 py-2 rounded-lg">Salir</button>
         </div>
     </nav>
@@ -164,18 +198,18 @@
             <button class="student-tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-stab="studentExamsTab">📝 Evaluaciones</button>
             <button class="student-tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg" data-stab="studentGradesTab">⭐ Calificaciones</button>
         </div>
-        <div id="studentTasksTab" class="student-tab-content"><div id="studentTasksList" class="grid gap-6"></div></div>
-        <div id="studentExamsTab" class="student-tab-content hidden"><div id="studentExamsList" class="grid gap-6"></div></div>
-        <div id="studentGradesTab" class="student-tab-content hidden"><div id="studentGradesList" class="grid gap-6"></div></div>
+        <div id="studentTasksTab" class="student-tab-content"><div id="studentTasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
+        <div id="studentExamsTab" class="student-tab-content hidden"><div id="studentExamsList" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div></div>
+        <div id="studentGradesTab" class="student-tab-content hidden"><div id="studentGradesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div></div>
     </div>
 </div>
 
-<!-- Modales de examen -->
+<!-- Modales de examen y ver respuestas -->
 <div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
         <h2 id="examTakeTitle" class="text-xl font-bold mb-4"></h2>
         <div id="examTakeQuestions"></div>
-        <div class="flex justify-end gap-3 mt-6"><button id="cancelExam" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button><button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar</button></div>
+        <div class="flex justify-end gap-3 mt-6"><button id="cancelExam" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button><button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar examen</button></div>
     </div>
 </div>
 <div id="viewAnswersModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
@@ -189,9 +223,10 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
+    // ---------- Firebase ----------
     const firebaseConfig = {
         apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
         authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -206,14 +241,13 @@
     const storage = getStorage(app);
     const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
 
-    // Referencias a colecciones
+    // Referencias
     const studentsRef = collection(db, 'students');
     const tasksRef = collection(db, 'tasks');
     const examsRef = collection(db, 'exams');
     const submissionsRef = collection(db, 'submissions');
     const resultsRef = collection(db, 'examResults');
 
-    // Variables globales
     let currentUser = null;
     let currentStudent = null;
     let allStudents = [], allTasks = [], allExams = [], allResults = [];
@@ -224,7 +258,7 @@
     const allGrades = ["PRIMERO DE PRIMARIA","SEGUNDO DE PRIMARIA","TERCERO DE PRIMARIA","CUARTO DE PRIMARIA","QUINTO DE PRIMARIA","SEXTO DE PRIMARIA","PRIMERO DE SECUNDARIA","SEGUNDO DE SECUNDARIA","TERCERO DE SECUNDARIA","CUARTO DE SECUNDARIA","QUINTO DE SECUNDARIA"];
     const allAreas = ["Matemáticas","Comunicación","Ciencias Sociales","Ciencia y Tecnología","Personal Social","Inglés","Arte y Cultura","Educación Física","Computación","Educación Religiosa","Tutoría","EPT"];
 
-    // Helper
+    // Helpers
     function showToast(msg, type='info') {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -249,9 +283,14 @@
         if (filterGrade) filterGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
         const filterArea = document.getElementById('filterTasksArea');
         if (filterArea) filterArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
+        // Selects de filtros para exámenes
+        const filterExamsGrade = document.getElementById('filterExamsGrade');
+        if (filterExamsGrade) filterExamsGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
+        const filterExamsArea = document.getElementById('filterExamsArea');
+        if (filterExamsArea) filterExamsArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
-    // Sembrar estudiantes iniciales si no existen
+    // Sembrar estudiantes iniciales
     async function seedStudents() {
         const snap = await getDocs(studentsRef);
         if (snap.empty) {
@@ -264,7 +303,7 @@
         }
     }
 
-    // Sincronización en tiempo real (se ejecuta al inicio, sin esperar login docente)
+    // Sincronización en tiempo real (se ejecuta al inicio)
     function initFirebaseSync() {
         if (unsubStudents) unsubStudents();
         if (unsubTasks) unsubTasks();
@@ -276,7 +315,7 @@
         unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
     }
 
-    // Funciones de renderizado (docente)
+    // Funciones de renderizado del docente
     function renderTasksList() {
         const container = document.getElementById('tasksList');
         if (!container) return;
@@ -284,46 +323,54 @@
         const area = document.getElementById('filterTasksArea')?.value || '';
         const filtered = allTasks.filter(t => (!grade || t.grade === grade) && (!area || t.area === area));
         container.innerHTML = filtered.map(t => `
-            <div class="bg-white rounded-xl shadow-sm border p-4 card-hover">
-                <div class="font-bold text-indigo-700">${escapeHtml(t.title)}</div>
-                <div class="text-sm text-gray-500">${t.area || 'Sin área'} · ${t.grade || 'Sin grado'}</div>
-                <p class="text-gray-600 text-sm">${escapeHtml(t.description?.substring(0,100))}</p>
-                ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm">Archivo</a>` : ''}
-                ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm ml-2">Enlace</a>` : ''}
-                <button class="delete-task mt-2 bg-red-100 text-red-600 px-3 py-1 rounded text-sm w-full" data-id="${t.id}">Eliminar</button>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden card-hover">
+                <div class="p-4">
+                    <div class="font-bold text-lg text-indigo-700">${escapeHtml(t.title)}</div>
+                    <div class="text-sm text-gray-500 mb-2">${t.area || 'Sin área'} · ${t.grade || 'Sin grado'}</div>
+                    <p class="text-gray-600 text-sm mb-3">${escapeHtml(t.description?.substring(0,100))}${t.description?.length>100?'...':''}</p>
+                    ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-flex items-center"><i class="fas fa-paperclip mr-1"></i> Archivo adjunto</a>` : ''}
+                    ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm ml-3 inline-flex items-center"><i class="fas fa-link mr-1"></i> Enlace</a>` : ''}
+                    <button class="delete-task mt-3 bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm w-full" data-id="${t.id}">Eliminar tarea</button>
+                </div>
             </div>
         `).join('');
         document.querySelectorAll('.delete-task').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(tasksRef, btn.dataset.id)); showToast("Tarea eliminada"); });
     }
+
     function renderExamsList() {
         const container = document.getElementById('examsList');
         if (!container) return;
-        container.innerHTML = allExams.map(e => `
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+        const grade = document.getElementById('filterExamsGrade')?.value || '';
+        const area = document.getElementById('filterExamsArea')?.value || '';
+        const filtered = allExams.filter(e => (!grade || e.grade === grade) && (!area || e.area === area));
+        container.innerHTML = filtered.map(e => `
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                 <div class="font-bold text-emerald-700">${escapeHtml(e.title)}</div>
                 <div class="text-sm text-gray-500">${e.area} · ${e.grade}</div>
                 <div class="text-sm">${e.questions?.length || 0} preguntas</div>
-                <button class="delete-exam mt-2 bg-red-100 text-red-600 px-3 py-1 rounded text-sm" data-id="${e.id}">Eliminar</button>
+                <button class="delete-exam mt-2 bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm" data-id="${e.id}">Eliminar examen</button>
             </div>
         `).join('');
         document.querySelectorAll('.delete-exam').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(examsRef, btn.dataset.id)); showToast("Examen eliminado"); });
     }
+
     function renderStudentsList() {
         const container = document.getElementById('studentsList');
         const gradeSelect = document.getElementById('filterStudentsGrade');
         if (!container || !gradeSelect) return;
         const selectedGrade = gradeSelect.value;
-        if (!selectedGrade) { container.innerHTML = '<p class="text-center text-gray-500">Selecciona un grado</p>'; return; }
+        if (!selectedGrade) { container.innerHTML = '<p class="text-gray-500 col-span-full text-center">Selecciona un grado para ver los estudiantes</p>'; return; }
         const filtered = allStudents.filter(s => s.grade === selectedGrade);
-        if (filtered.length === 0) { container.innerHTML = `<p class="text-center text-gray-500">No hay estudiantes en ${escapeHtml(selectedGrade)}</p>`; return; }
+        if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-500 col-span-full text-center">No hay estudiantes en el grado ${escapeHtml(selectedGrade)}</p>`; return; }
         container.innerHTML = filtered.map(s => `
             <div class="bg-white rounded-lg shadow-sm p-3 flex justify-between items-center border">
-                <div><strong>${escapeHtml(s.name)}</strong><br><span class="text-xs">📞 ${s.phones?.join(', ')}</span></div>
+                <div><strong>${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-500">📞 ${s.phones?.join(', ') || ''}</span></div>
                 <button class="delete-student bg-red-500 text-white px-2 py-1 rounded text-sm" data-id="${s.id}">Eliminar</button>
             </div>
         `).join('');
         document.querySelectorAll('.delete-student').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(studentsRef, btn.dataset.id)); showToast("Estudiante eliminado"); });
     }
+
     async function renderGradesTable() {
         const tbody = document.getElementById('gradesTableBody');
         if (!tbody) return;
@@ -340,14 +387,26 @@
             const student = allStudents.find(s => s.id === r.studentId);
             const studentName = student?.name || 'Desconocido';
             const phone = student?.phones?.[0] || '';
-            return `<tr class="border-b"><td class="p-2">${escapeHtml(studentName)}</td><td>${escapeHtml(r.examTitle)}</td><td class="font-bold">${r.grade}</td><td><button class="view-results-btn text-blue-600 mr-2" data-result-id="${r.id}" data-student="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Ver</button><button class="download-report-btn text-emerald-600 mr-2" data-result-id="${r.id}" data-student="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Reporte</button><button class="whatsapp-btn text-green-600" data-phone="${phone}" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">WhatsApp</button></td><td class="text-xs">${r.date ? new Date(r.date.toMillis()).toLocaleDateString() : ''}</td></tr>`;
+            return `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3">${escapeHtml(studentName)}</td>
+                    <td class="p-3">${escapeHtml(r.examTitle)}</td>
+                    <td class="p-3 font-bold">${r.grade}</td>
+                    <td class="p-3">
+                        <button class="view-results-btn text-blue-600 mr-2" data-result-id="${r.id}" data-student="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Ver</button>
+                        <button class="download-report-btn text-emerald-600 mr-2" data-result-id="${r.id}" data-student="${escapeHtml(studentName)}" data-exam-id="${r.examId}">Reporte</button>
+                        <button class="whatsapp-btn text-green-600" data-phone="${phone}" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">WhatsApp</button>
+                    </td>
+                    <td class="p-3 text-xs text-gray-500">${r.date ? new Date(r.date.toMillis()).toLocaleDateString() : ''}</td>
+                </tr>
+            `;
         }).join('');
         document.querySelectorAll('.view-results-btn').forEach(btn => btn.onclick = () => viewStudentAnswers(btn.dataset.resultId, btn.dataset.student, btn.dataset.examId));
         document.querySelectorAll('.download-report-btn').forEach(btn => btn.onclick = () => downloadPDFReport(btn.dataset.resultId, btn.dataset.student, btn.dataset.examId));
         document.querySelectorAll('.whatsapp-btn').forEach(btn => btn.onclick = () => { if(btn.dataset.phone) window.open(`https://wa.me/${btn.dataset.phone}?text=Resultado: ${btn.dataset.exam} - Nota: ${btn.dataset.grade}`); });
     }
 
-    // PDF y visualización de respuestas
+    // Reporte PDF
     async function downloadPDFReport(resultId, studentName, examId) {
         try {
             const resultDoc = await getDoc(doc(resultsRef, resultId));
@@ -381,6 +440,7 @@
             showToast("Reporte descargado", "success");
         } catch(e) { showToast("Error al generar reporte", "error"); }
     }
+
     async function viewStudentAnswers(resultId, studentName, examId) {
         const resultDoc = await getDoc(doc(resultsRef, resultId));
         if (!resultDoc.exists()) return showToast("No encontrado");
@@ -390,31 +450,38 @@
         const exam = examDoc.data();
         const modal = document.getElementById('viewAnswersModal');
         document.getElementById('viewAnswersTitle').innerHTML = `${exam.title} - ${studentName}`;
-        let html = `<div class="mb-2 p-2 bg-gray-100 rounded">Calificación: ${result.grade} (${result.score}/${result.total})</div>`;
+        let html = `<div class="mb-3 p-2 bg-gray-100 rounded">Calificación: ${result.grade} (${result.score}/${result.total})</div>`;
         exam.questions.forEach((q, idx) => {
             const userAns = result.answers[idx] !== undefined ? result.answers[idx] : -1;
             const userText = userAns === -1 ? "No respondió" : q.options[userAns];
             const isCorrect = userAns === q.correct;
-            html += `<div class="border p-2 mb-2 rounded"><p class="font-bold">${idx+1}. ${escapeHtml(q.text)}</p><p>Tu respuesta: ${userText} ${isCorrect ? '✅' : '❌'}</p><p class="text-blue-600">Correcta: ${q.options[q.correct]}</p></div>`;
+            html += `<div class="border p-3 mb-3 rounded-lg">
+                        <p class="font-semibold">${idx+1}. ${escapeHtml(q.text)}</p>
+                        <p>Tu respuesta: ${userText} ${isCorrect ? '✅' : '❌'}</p>
+                        <p class="text-blue-600">Respuesta correcta: ${q.options[q.correct]}</p>
+                    </div>`;
         });
         document.getElementById('viewAnswersContent').innerHTML = html;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
     }
 
-    // Funciones del estudiante (con tiempo real)
+    // Funciones del estudiante
     function renderStudentTasks() {
         const container = document.getElementById('studentTasksList');
         if (!container || !currentStudent) return;
         const tasks = allTasks.filter(t => t.grade === currentStudent.grade);
         container.innerHTML = tasks.map(t => `
-            <div class="bg-white rounded-xl shadow-sm border p-4">
+            <div class="bg-white rounded-xl shadow-sm border p-4 card-hover">
                 <div class="font-bold text-indigo-700">${escapeHtml(t.title)}</div>
-                <div class="text-sm">${t.area}</div>
-                <p class="text-gray-600 text-sm">${escapeHtml(t.description?.substring(0,100))}</p>
-                ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm">📎 Recurso</a>` : ''}
-                ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm ml-2">🔗 Enlace</a>` : ''}
-                <div class="mt-2"><input type="file" id="file_${t.id}" class="text-sm w-full border p-1 rounded"><button class="submit-task mt-1 bg-emerald-500 text-white px-3 py-1 rounded w-full" data-taskid="${t.id}" data-title="${escapeHtml(t.title)}" data-area="${escapeHtml(t.area)}">Entregar</button></div>
+                <div class="text-sm text-gray-500">${t.area || 'Sin área'}</div>
+                <p class="text-gray-600 text-sm my-2">${escapeHtml(t.description?.substring(0,100))}</p>
+                ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-block mb-2"><i class="fas fa-download"></i> Recurso guía</a>` : ''}
+                ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm inline-block ml-2"><i class="fas fa-external-link-alt"></i> Enlace</a>` : ''}
+                <div class="mt-3">
+                    <input type="file" id="file_${t.id}" class="text-sm w-full border p-1 rounded">
+                    <button class="submit-task mt-2 bg-emerald-500 text-white px-3 py-1 rounded-lg w-full" data-taskid="${t.id}" data-title="${escapeHtml(t.title)}" data-area="${escapeHtml(t.area)}">Entregar tarea</button>
+                </div>
             </div>
         `).join('');
         document.querySelectorAll('.submit-task').forEach(btn => btn.onclick = async () => {
@@ -424,31 +491,36 @@
             const storageRef = ref(storage, `submissions/${currentStudent.id}_${taskId}_${Date.now()}_${file.name}`);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
-            await addDoc(submissionsRef, { studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade, taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, fileURL: url, submittedAt: serverTimestamp() });
+            await addDoc(submissionsRef, {
+                studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
+                taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, fileURL: url, submittedAt: serverTimestamp()
+            });
             showToast("Tarea entregada", "success");
             document.getElementById(`file_${taskId}`).value = '';
         });
     }
+
     function renderStudentExams() {
         const container = document.getElementById('studentExamsList');
         if (!container || !currentStudent) return;
         const exams = allExams.filter(e => e.grade === currentStudent.grade);
         container.innerHTML = exams.map(e => `
             <div class="bg-white rounded-xl shadow-sm border p-4 flex justify-between items-center">
-                <div><div class="font-bold text-emerald-700">${escapeHtml(e.title)}</div><div class="text-sm">${e.area}</div><div>${e.questions.length} preguntas</div></div>
-                <button class="take-exam bg-purple-600 text-white px-3 py-1 rounded" data-exam='${JSON.stringify(e)}'>Rendir</button>
+                <div><div class="font-bold text-emerald-700">${escapeHtml(e.title)}</div><div class="text-sm text-gray-500">${e.area}</div><div>${e.questions.length} preguntas</div></div>
+                <button class="take-exam bg-purple-600 text-white px-4 py-2 rounded-lg" data-exam='${JSON.stringify(e)}'>Rendir</button>
             </div>
         `).join('');
         document.querySelectorAll('.take-exam').forEach(btn => btn.onclick = () => startExam(JSON.parse(btn.dataset.exam)));
     }
+
     function renderStudentGrades() {
         const container = document.getElementById('studentGradesList');
         if (!container || !currentStudent) return;
         const myResults = allResults.filter(r => r.studentId === currentStudent.id);
         container.innerHTML = myResults.map(r => `
             <div class="bg-white rounded-xl shadow-sm border p-4">
-                <div class="font-bold">${escapeHtml(r.examTitle)}</div>
-                <div class="text-2xl font-bold ${r.grade === 'AD' ? 'text-emerald-600' : r.grade === 'A' ? 'text-blue-600' : r.grade === 'B' ? 'text-amber-600' : 'text-red-600'}">${r.grade}</div>
+                <div class="font-bold text-gray-800">${escapeHtml(r.examTitle)}</div>
+                <div class="text-3xl font-bold ${r.grade === 'AD' ? 'text-emerald-600' : r.grade === 'A' ? 'text-blue-600' : r.grade === 'B' ? 'text-amber-600' : 'text-red-600'}">${r.grade}</div>
                 <div>${r.score}/${r.total} aciertos</div>
                 <button class="view-my-exam mt-2 text-blue-600 text-sm" data-result-id="${r.id}" data-exam-id="${r.examId}">Ver respuestas</button>
             </div>
@@ -456,7 +528,6 @@
         document.querySelectorAll('.view-my-exam').forEach(btn => btn.onclick = () => viewStudentAnswers(btn.dataset.resultId, currentStudent.name, btn.dataset.examId));
     }
 
-    // Inicio de examen
     async function startExam(exam) {
         const already = allResults.some(r => r.studentId === currentStudent.id && r.examId === exam.id);
         if (already) { showToast("Ya rendiste este examen", "info"); return; }
@@ -465,8 +536,10 @@
         const questionsDiv = document.getElementById('examTakeQuestions');
         questionsDiv.innerHTML = exam.questions.map((q, idx) => `
             <div class="mb-4 border-b pb-2">
-                <p class="font-bold">${idx+1}. ${escapeHtml(q.text)}</p>
-                <div class="pl-4">${q.options.map((opt, i) => `<label class="block"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}</div>
+                <p class="font-semibold mb-2">${idx+1}. ${escapeHtml(q.text)}</p>
+                <div class="space-y-1 pl-4">
+                    ${q.options.map((opt, i) => `<label class="flex items-center gap-2"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}
+                </div>
             </div>
         `).join('');
         modal.classList.remove('hidden');
@@ -488,19 +561,25 @@
             if (percent >= 90) grade = "AD";
             else if (percent >= 75) grade = "A";
             else if (percent >= 60) grade = "B";
-            const resultRef = await addDoc(resultsRef, { studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade, examId: exam.id, examTitle: exam.title, examArea: exam.area, grade, score: correct, total: exam.questions.length, date: serverTimestamp(), answers });
+            const resultRef = await addDoc(resultsRef, {
+                studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
+                examId: exam.id, examTitle: exam.title, examArea: exam.area, grade, score: correct, total: exam.questions.length,
+                date: serverTimestamp(), answers
+            });
             showToast(`Nota: ${grade} (${correct}/${exam.questions.length})`, "success");
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             await downloadPDFReport(resultRef.id, currentStudent.name, exam.id);
             if (currentStudent.phones && currentStudent.phones[0]) {
-                if (confirm("¿Enviar resultado por WhatsApp a tus padres?")) window.open(`https://wa.me/${currentStudent.phones[0].replace(/\s/g, '')}?text=Mi examen "${exam.title}" obtuve ${grade}`, '_blank');
+                if (confirm("¿Enviar resultado por WhatsApp a tus padres?")) {
+                    window.open(`https://wa.me/${currentStudent.phones[0].replace(/\s/g, '')}?text=Mi examen "${exam.title}" obtuve ${grade}`, '_blank');
+                }
             }
             renderStudentGrades();
         };
     }
 
-    // ----- Slider interactivo (mismo código que antes) -----
+    // Slider interactivo
     let sliderDragging = false;
     let sliderStartX = 0;
     let sliderThumbLeft = 0;
@@ -600,214 +679,257 @@
         }
     }
 
-    // Cargar datos generales al iniciar la página (sin esperar login docente)
+    // Inicialización general (se ejecuta al cargar la página)
     async function initializeApp() {
-        // Autenticación anónima
-        await signInAnonymously(auth).catch(e => console.error(e));
-        // Sembrar estudiantes si es necesario
-        await seedStudents();
-        // Inicializar sincronización de Firebase (students, tasks, exams, results)
-        initFirebaseSync();
-        // Poblar selects una vez que la página esté lista
-        populateSelects();
+        try {
+            await signInAnonymously(auth);
+            console.log("Autenticación anónima exitosa");
+            await seedStudents();
+            initFirebaseSync();
+            populateSelects();
+            console.log("Aplicación inicializada correctamente");
+        } catch (error) {
+            console.error("Error en inicialización:", error);
+            showToast("Error al conectar con el servidor", "error");
+        }
     }
 
-    // Eventos de navegación
-    document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
-    document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
-    document.getElementById('loginTeacher').onclick = () => {
-        if (document.getElementById('teacherPass').value === 'profemanu2026') {
-            document.getElementById('teacherModal').classList.add('hidden');
-            document.getElementById('welcomeScreen').classList.add('hidden');
-            document.getElementById('teacherPanel').classList.remove('hidden');
-            // Asegurar que la lista de estudiantes se muestre al abrir la pestaña
-            setTimeout(() => {
-                const gradeSelect = document.getElementById('filterStudentsGrade');
-                if (gradeSelect && gradeSelect.options.length > 1 && !gradeSelect.value) {
-                    gradeSelect.value = allGrades[0];
-                    renderStudentsList();
+    // Eventos de navegación (después de cargar el DOM)
+    document.addEventListener('DOMContentLoaded', () => {
+        // Botones de acceso
+        document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
+        document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
+        document.getElementById('loginTeacher').onclick = () => {
+            if (document.getElementById('teacherPass').value === 'profemanu2026') {
+                document.getElementById('teacherModal').classList.add('hidden');
+                document.getElementById('welcomeScreen').classList.add('hidden');
+                document.getElementById('teacherPanel').classList.remove('hidden');
+                setTimeout(() => {
+                    const gradeSelect = document.getElementById('filterStudentsGrade');
+                    if (gradeSelect && gradeSelect.options.length > 1 && !gradeSelect.value) {
+                        gradeSelect.value = allGrades[0];
+                        renderStudentsList();
+                    }
+                }, 100);
+            } else showToast("Contraseña incorrecta");
+        };
+        document.getElementById('logoutTeacherPanel').onclick = () => {
+            document.getElementById('teacherPanel').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+        };
+
+        document.getElementById('studentBtn').onclick = async () => {
+            // Esperar a que allStudents tenga datos
+            if (allStudents.length === 0) {
+                showToast("Cargando datos, espera un momento...", "info");
+                let waitCount = 0;
+                while (allStudents.length === 0 && waitCount < 20) {
+                    await new Promise(resolve => setTimeout(resolve, 200));
+                    waitCount++;
                 }
-            }, 100);
-        } else showToast("Contraseña incorrecta");
-    };
-    document.getElementById('logoutTeacherPanel').onclick = () => {
-        document.getElementById('teacherPanel').classList.add('hidden');
-        document.getElementById('welcomeScreen').classList.remove('hidden');
-    };
-    document.getElementById('studentBtn').onclick = async () => {
-        // Asegurar que los datos ya están cargados (allStudents debe tener datos de initFirebaseSync)
-        if (allStudents.length === 0) {
-            showToast("Cargando datos, espera un momento...", "info");
-            // Esperar un poco si aún no llegaron los datos
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-        populateSelects(); // refrescar selects por si acaso
-        resetSlider();
-        document.getElementById('studentModal').classList.remove('hidden');
-        const gradeSelect = document.getElementById('studentGradeSelect');
-        const nameSelect = document.getElementById('studentNameSelect');
-        const loadNames = () => {
-            const grade = gradeSelect.value;
-            const students = allStudents.filter(s => s.grade === grade);
-            nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + students.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join('');
+            }
+            if (allStudents.length === 0) {
+                showToast("No se pudieron cargar los datos. Revisa tu conexión.", "error");
+                return;
+            }
+            populateSelects(); // refrescar
+            resetSlider();
+            document.getElementById('studentModal').classList.remove('hidden');
+            const gradeSelect = document.getElementById('studentGradeSelect');
+            const nameSelect = document.getElementById('studentNameSelect');
+            const loadNames = () => {
+                const grade = gradeSelect.value;
+                const students = allStudents.filter(s => s.grade === grade);
+                nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + students.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join('');
+            };
+            gradeSelect.onchange = loadNames;
+            loadNames();
+            initSlider();
         };
-        gradeSelect.onchange = loadNames;
-        loadNames();
-        initSlider();
-    };
-    document.getElementById('enterStudent').onclick = () => {
-        const val = document.getElementById('studentNameSelect').value;
-        if (!val) return showToast("Selecciona tu nombre");
-        if (enterBtn.disabled) return showToast("Debes deslizar la flecha hasta el final", "warning");
-        currentStudent = JSON.parse(val);
-        document.getElementById('studentModal').classList.add('hidden');
-        document.getElementById('welcomeScreen').classList.add('hidden');
-        document.getElementById('studentPanel').classList.remove('hidden');
-        document.getElementById('studentNameSpan').innerText = currentStudent.name;
-        document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
-        renderStudentTasks(); renderStudentExams(); renderStudentGrades();
-        // Suscribirse a cambios en tiempo real para el estudiante
-        const unsubTasksStud = onSnapshot(tasksRef, () => renderStudentTasks());
-        const unsubExamsStud = onSnapshot(examsRef, () => renderStudentExams());
-        const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
-        studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
-    };
-    document.getElementById('closeStudentModal').onclick = () => {
-        document.getElementById('studentModal').classList.add('hidden');
-        resetSlider();
-    };
-    document.getElementById('logoutStudentPanel').onclick = () => {
-        document.getElementById('studentPanel').classList.add('hidden');
-        document.getElementById('welcomeScreen').classList.remove('hidden');
-        studentUnsubs.forEach(unsub => unsub());
-        currentStudent = null;
-    };
 
-    // Pestañas
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
-            btn.classList.add('active', 'bg-indigo-600', 'text-white');
-            document.querySelectorAll('.tab-content').forEach(div => div.classList.add('hidden'));
-            document.getElementById(btn.dataset.tab).classList.remove('hidden');
+        document.getElementById('enterStudent').onclick = () => {
+            const val = document.getElementById('studentNameSelect').value;
+            if (!val) return showToast("Selecciona tu nombre");
+            if (enterBtn.disabled) return showToast("Debes deslizar la flecha hasta el final", "warning");
+            currentStudent = JSON.parse(val);
+            document.getElementById('studentModal').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('studentPanel').classList.remove('hidden');
+            document.getElementById('studentNameSpan').innerText = currentStudent.name;
+            document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
+            renderStudentTasks(); renderStudentExams(); renderStudentGrades();
+            // Suscripciones en tiempo real para el estudiante
+            const unsubTasksStud = onSnapshot(tasksRef, () => renderStudentTasks());
+            const unsubExamsStud = onSnapshot(examsRef, () => renderStudentExams());
+            const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
+            studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
         };
-    });
-    document.querySelectorAll('.student-tab-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.student-tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-600', 'text-white'));
-            btn.classList.add('active', 'bg-emerald-600', 'text-white');
-            document.querySelectorAll('.student-tab-content').forEach(div => div.classList.add('hidden'));
-            document.getElementById(btn.dataset.stab).classList.remove('hidden');
-        };
-    });
 
-    // Publicar tarea, examen, etc. (igual que antes - resumido pero funcional)
-    document.getElementById('publishTask').onclick = async () => {
-        const title = document.getElementById('taskTitle').value.trim();
-        if (!title) return showToast("El título es obligatorio");
-        const btn = document.getElementById('publishTask');
-        btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Publicando...';
-        try {
-            let fileURL = null;
-            const file = document.getElementById('taskFile').files[0];
-            if (file) { const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`); await uploadBytes(storageRef, file); fileURL = await getDownloadURL(storageRef); }
-            await addDoc(tasksRef, { title, grade: document.getElementById('taskGrade').value || null, area: document.getElementById('taskArea').value || null, description: document.getElementById('taskDesc').value || null, fileURL, link: document.getElementById('taskLink').value || null, createdAt: serverTimestamp() });
-            showToast("Tarea publicada");
-            document.getElementById('taskTitle').value = ''; document.getElementById('taskDesc').value = ''; document.getElementById('taskFile').value = ''; document.getElementById('taskLink').value = '';
-        } catch(e) { showToast("Error"); }
-        finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
-    };
-    document.getElementById('generateTaskDesc').onclick = async () => {
-        const topic = document.getElementById('taskTitle').value;
-        if (!topic) return showToast("Escribe un título");
-        const btn = document.getElementById('generateTaskDesc');
-        btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
-        try {
-            const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
-                body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 })
-            });
-            const data = await res.json();
-            document.getElementById('taskDesc').value = data.choices[0].message.content;
-            showToast("Descripción generada");
-        } catch(e) { showToast("Error con IA"); }
-        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Generar IA'; }
-    };
-    document.getElementById('generateQuestions').onclick = async () => {
-        const topic = document.getElementById('examTopic').value;
-        const num = parseInt(document.getElementById('numQuestions').value);
-        if (!topic) return showToast("Escribe el tema");
-        const btn = document.getElementById('generateQuestions');
-        btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
-        try {
-            const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
-                body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }], temperature: 0.7 })
-            });
-            const data = await res.json();
-            let clean = data.choices[0].message.content.replace(/```json/g,'').replace(/```/g,'').trim();
-            let questions = JSON.parse(clean);
-            const editor = document.getElementById('questionsEditor');
-            editor.innerHTML = '';
-            questions.forEach((q, idx) => {
-                const div = document.createElement('div');
-                div.className = 'border rounded-lg p-3 bg-gray-50 relative';
-                div.innerHTML = `<button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
-                    <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
-                    <div class="grid grid-cols-2 gap-2">${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}</div>
-                    <select class="correct-option mt-2 border p-2 rounded"><option value="0" ${q.correct===0?'selected':''}>Opción 1</option><option value="1" ${q.correct===1?'selected':''}>Opción 2</option><option value="2" ${q.correct===2?'selected':''}>Opción 3</option><option value="3" ${q.correct===3?'selected':''}>Opción 4</option></select>`;
-                editor.appendChild(div);
-            });
-            document.querySelectorAll('.remove-question').forEach(btn => btn.onclick = function() { this.closest('.border').remove(); });
-            showToast("Preguntas generadas");
-        } catch(e) { showToast("Error con IA, edita manualmente"); }
-        finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
-    };
-    document.getElementById('publishExam').onclick = async () => {
-        const title = document.getElementById('examTitle').value;
-        const grade = document.getElementById('examGrade').value;
-        const area = document.getElementById('examArea').value;
-        const questions = [];
-        document.querySelectorAll('#questionsEditor > div').forEach(div => {
-            const inputs = div.querySelectorAll('input[type="text"]');
-            const text = inputs[0].value;
-            const options = [inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
-            const correct = parseInt(div.querySelector('.correct-option').value);
-            if (text && options.every(o=>o)) questions.push({ text, options, correct });
+        document.getElementById('closeStudentModal').onclick = () => {
+            document.getElementById('studentModal').classList.add('hidden');
+            resetSlider();
+        };
+        document.getElementById('logoutStudentPanel').onclick = () => {
+            document.getElementById('studentPanel').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            studentUnsubs.forEach(unsub => unsub());
+            currentStudent = null;
+        };
+
+        // Pestañas del docente
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
+                btn.classList.add('active', 'bg-indigo-600', 'text-white');
+                document.querySelectorAll('.tab-content').forEach(div => div.classList.add('hidden'));
+                document.getElementById(btn.dataset.tab).classList.remove('hidden');
+            };
         });
-        if (!title || !grade || !area || questions.length === 0) return showToast("Complete todos los campos y al menos una pregunta");
-        await addDoc(examsRef, { title, grade, area, questions, createdAt: serverTimestamp() });
-        showToast("Examen publicado");
-        document.getElementById('examTitle').value = ''; document.getElementById('examTopic').value = ''; document.getElementById('questionsEditor').innerHTML = '';
-    };
-    document.getElementById('addStudent').onclick = async () => {
-        const name = document.getElementById('newStudentName').value.trim().toUpperCase();
-        const grade = document.getElementById('newStudentGrade').value;
-        const phone = document.getElementById('newStudentPhone').value.trim();
-        if (!name || !grade) return showToast("Nombre y grado requeridos");
-        if (allStudents.some(s => s.name === name && s.grade === grade)) return showToast("Ya existe", "error");
-        await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] });
-        showToast("Estudiante agregado");
-        document.getElementById('newStudentName').value = ''; document.getElementById('newStudentPhone').value = '';
-        const selectedGrade = document.getElementById('filterStudentsGrade').value;
-        if (selectedGrade === grade) renderStudentsList();
-    };
+        // Pestañas del estudiante
+        document.querySelectorAll('.student-tab-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.student-tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-600', 'text-white'));
+                btn.classList.add('active', 'bg-emerald-600', 'text-white');
+                document.querySelectorAll('.student-tab-content').forEach(div => div.classList.add('hidden'));
+                document.getElementById(btn.dataset.stab).classList.remove('hidden');
+            };
+        });
 
-    // Filtros
-    document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
-    document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
-    document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
-    document.getElementById('filterArea')?.addEventListener('change', () => renderGradesTable());
-    document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
-    document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
-    document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
-    document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
-    document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
-        document.getElementById('viewAnswersModal').classList.add('hidden');
-        document.getElementById('viewAnswersModal').classList.remove('flex');
+        // Publicar tarea
+        document.getElementById('publishTask').onclick = async () => {
+            const title = document.getElementById('taskTitle').value.trim();
+            if (!title) { showToast("El título es obligatorio", "error"); return; }
+            const btn = document.getElementById('publishTask');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Publicando...';
+            try {
+                let fileURL = null;
+                const file = document.getElementById('taskFile').files[0];
+                if (file) { const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`); await uploadBytes(storageRef, file); fileURL = await getDownloadURL(storageRef); }
+                await addDoc(tasksRef, {
+                    title, grade: document.getElementById('taskGrade').value || null, area: document.getElementById('taskArea').value || null,
+                    description: document.getElementById('taskDesc').value || null, fileURL, link: document.getElementById('taskLink').value || null, createdAt: serverTimestamp()
+                });
+                showToast("Tarea publicada correctamente", "success");
+                document.getElementById('taskTitle').value = ''; document.getElementById('taskDesc').value = ''; document.getElementById('taskFile').value = ''; document.getElementById('taskLink').value = ''; document.getElementById('taskGrade').value = ''; document.getElementById('taskArea').value = '';
+            } catch (error) { showToast("Error al publicar tarea", "error"); }
+            finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
+        };
+
+        // Generar descripción de tarea con IA
+        document.getElementById('generateTaskDesc').onclick = async () => {
+            const topic = document.getElementById('taskTitle').value;
+            if (!topic) return showToast("Escribe un título para generar la descripción");
+            const btn = document.getElementById('generateTaskDesc');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+            try {
+                const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 })
+                });
+                const data = await res.json();
+                document.getElementById('taskDesc').value = data.choices[0].message.content;
+                showToast("Descripción generada", "success");
+            } catch(e) { showToast("Error al generar descripción", "error"); }
+            finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Generar IA'; }
+        };
+
+        // Generar preguntas con IA
+        document.getElementById('generateQuestions').onclick = async () => {
+            const topic = document.getElementById('examTopic').value;
+            const num = parseInt(document.getElementById('numQuestions').value);
+            if (!topic) return showToast("Escribe el tema");
+            const btn = document.getElementById('generateQuestions');
+            btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+            try {
+                const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }], temperature: 0.7 })
+                });
+                const data = await res.json();
+                let content = data.choices[0].message.content;
+                let clean = content.replace(/```json/g,'').replace(/```/g,'').trim();
+                let questions = JSON.parse(clean);
+                const editor = document.getElementById('questionsEditor');
+                editor.innerHTML = '';
+                questions.forEach((q, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'border rounded-lg p-3 bg-gray-50 relative';
+                    div.innerHTML = `
+                        <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
+                        <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
+                        <div class="grid grid-cols-2 gap-2">
+                            ${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}
+                        </div>
+                        <select class="correct-option mt-2 border p-2 rounded w-full">
+                            <option value="0" ${q.correct===0?'selected':''}>Opción 1 correcta</option>
+                            <option value="1" ${q.correct===1?'selected':''}>Opción 2 correcta</option>
+                            <option value="2" ${q.correct===2?'selected':''}>Opción 3 correcta</option>
+                            <option value="3" ${q.correct===3?'selected':''}>Opción 4 correcta</option>
+                        </select>
+                    `;
+                    editor.appendChild(div);
+                });
+                document.querySelectorAll('.remove-question').forEach(btn => btn.onclick = function() { this.closest('.border').remove(); });
+                showToast("Preguntas generadas", "success");
+            } catch(e) { showToast("Error con IA, edita manualmente", "error"); }
+            finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
+        };
+
+        // Publicar examen
+        document.getElementById('publishExam').onclick = async () => {
+            const title = document.getElementById('examTitle').value;
+            const grade = document.getElementById('examGrade').value;
+            const area = document.getElementById('examArea').value;
+            const questionDivs = document.querySelectorAll('#questionsEditor > div');
+            const questions = [];
+            questionDivs.forEach(div => {
+                const inputs = div.querySelectorAll('input[type="text"]');
+                const text = inputs[0].value;
+                const options = [inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
+                const correct = parseInt(div.querySelector('.correct-option').value);
+                if (text && options.every(o=>o)) questions.push({ text, options, correct });
+            });
+            if (!title || !grade || !area || questions.length === 0) return showToast("Complete todos los campos y al menos una pregunta");
+            await addDoc(examsRef, { title, grade, area, questions, createdAt: serverTimestamp() });
+            showToast("Examen publicado");
+            document.getElementById('examTitle').value = ''; document.getElementById('examTopic').value = ''; document.getElementById('questionsEditor').innerHTML = ''; document.getElementById('numQuestions').value = '5';
+        };
+
+        // Agregar estudiante (con verificación de duplicado)
+        document.getElementById('addStudent').onclick = async () => {
+            const name = document.getElementById('newStudentName').value.trim().toUpperCase();
+            const grade = document.getElementById('newStudentGrade').value;
+            const phone = document.getElementById('newStudentPhone').value.trim();
+            if (!name || !grade) return showToast("Nombre y grado requeridos");
+            if (allStudents.some(s => s.name === name && s.grade === grade)) { showToast("Ya existe un estudiante con ese nombre y grado", "error"); return; }
+            await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] });
+            showToast("Estudiante agregado");
+            document.getElementById('newStudentName').value = ''; document.getElementById('newStudentPhone').value = '';
+            const selectedGrade = document.getElementById('filterStudentsGrade').value;
+            if (selectedGrade === grade) renderStudentsList();
+        };
+
+        // Filtros y refrescos
+        document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
+        document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
+        document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
+        document.getElementById('filterExamsGrade')?.addEventListener('change', () => renderExamsList());
+        document.getElementById('filterExamsArea')?.addEventListener('change', () => renderExamsList());
+        document.getElementById('refreshExamsListBtn')?.addEventListener('click', () => renderExamsList());
+        document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
+        document.getElementById('filterArea')?.addEventListener('change', () => renderGradesTable());
+        document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
+        document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
+        document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
+
+        // Cerrar modal de respuestas
+        document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
+            document.getElementById('viewAnswersModal').classList.add('hidden');
+            document.getElementById('viewAnswersModal').classList.remove('flex');
+        });
     });
 
-    // Inicializar la aplicación
+    // Iniciar la aplicación
     initializeApp();
 </script>
 </body>
