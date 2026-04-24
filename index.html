@@ -18,12 +18,10 @@
         .dark { background-color: #111827; color: #f3f4f6; }
         .dark .card { background-color: #1f2937; border-color: #374151; }
         .dark input, .dark select, .dark textarea { background-color: #374151; color: #f3f4f6; border-color: #4b5563; }
-        .btn-loading { opacity: 0.7; pointer-events: none; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 transition-colors">
 
-<!-- Toast -->
 <div id="toast" class="toast"></div>
 
 <!-- Pantalla de bienvenida -->
@@ -82,25 +80,15 @@
                 <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input type="text" id="taskTitle" placeholder="Título (obligatorio)" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                    <select id="taskGrade" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <option value="">-- Grado (opcional) --</option>
-                    </select>
-                    <select id="taskArea" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500">
-                        <option value="">-- Área (opcional) --</option>
-                    </select>
+                    <select id="taskGrade" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500"><option value="">-- Grado (opcional) --</option></select>
+                    <select id="taskArea" class="border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-indigo-500"><option value="">-- Área (opcional) --</option></select>
                     <div class="flex gap-2">
                         <textarea id="taskDesc" placeholder="Descripción (opcional)" class="border border-gray-300 p-3 rounded-lg flex-1 focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
                         <button id="generateTaskDesc" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition"><i class="fas fa-magic"></i> Generar IA</button>
                     </div>
                     <div class="md:col-span-2 flex flex-col md:flex-row gap-4">
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Archivo guía (PDF, Word, TXT)</label>
-                            <input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="w-full border border-gray-300 p-2 rounded-lg">
-                        </div>
-                        <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Enlace (YouTube, web)</label>
-                            <input type="text" id="taskLink" placeholder="https://..." class="w-full border border-gray-300 p-2 rounded-lg">
-                        </div>
+                        <div class="flex-1"><label class="block text-sm font-medium text-gray-700 mb-1">Archivo guía (PDF, Word, TXT)</label><input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="w-full border border-gray-300 p-2 rounded-lg"></div>
+                        <div class="flex-1"><label class="block text-sm font-medium text-gray-700 mb-1">Enlace (YouTube, web)</label><input type="text" id="taskLink" placeholder="https://..." class="w-full border border-gray-300 p-2 rounded-lg"></div>
                     </div>
                     <button id="publishTask" class="md:col-span-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition shadow-md">Publicar Tarea</button>
                 </div>
@@ -138,7 +126,7 @@
             <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <!-- Calificaciones (docente) -->
+        <!-- Calificaciones -->
         <div id="gradesTab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-sm p-6 mb-4">
                 <div class="flex flex-col sm:flex-row gap-4 mb-4">
@@ -148,11 +136,7 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
-                        <thead>
-                            <tr class="bg-gray-100 border-b">
-                                <th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th>
-                            </tr>
-                        </thead>
+                        <thead><tr class="bg-gray-100 border-b"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
                         <tbody id="gradesTableBody"></tbody>
                     </table>
                 </div>
@@ -183,11 +167,7 @@
 <div id="studentPanel" class="hidden min-h-screen bg-gray-50">
     <nav class="bg-white shadow-md border-b sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <i class="fas fa-user-graduate text-emerald-600 text-xl"></i>
-                <span id="studentNameSpan" class="font-bold text-gray-800"></span>
-                <span id="studentGradeSpan" class="text-sm text-gray-500"></span>
-            </div>
+            <div class="flex items-center gap-3"><i class="fas fa-user-graduate text-emerald-600 text-xl"></i><span id="studentNameSpan" class="font-bold text-gray-800"></span><span id="studentGradeSpan" class="text-sm text-gray-500"></span></div>
             <button id="logoutStudentPanel" class="bg-red-500 text-white px-4 py-2 rounded-lg">Salir</button>
         </div>
     </nav>
@@ -203,15 +183,12 @@
     </div>
 </div>
 
-<!-- Modales de examen y ver respuestas -->
+<!-- Modales -->
 <div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
         <h2 id="examTakeTitle" class="text-xl font-bold mb-4"></h2>
         <div id="examTakeQuestions"></div>
-        <div class="flex justify-end gap-3 mt-6">
-            <button id="cancelExam" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button>
-            <button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar examen</button>
-        </div>
+        <div class="flex justify-end gap-3 mt-6"><button id="cancelExam" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button><button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar examen</button></div>
     </div>
 </div>
 <div id="viewAnswersModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
@@ -225,10 +202,9 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // ---------- Firebase ----------
     const firebaseConfig = {
         apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
         authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -243,7 +219,6 @@
     const storage = getStorage(app);
     const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
 
-    // Referencias
     const studentsRef = collection(db, 'students');
     const tasksRef = collection(db, 'tasks');
     const examsRef = collection(db, 'exams');
@@ -253,9 +228,8 @@
     let currentUser = null;
     let currentStudent = null;
     let allStudents = [], allTasks = [], allExams = [], allResults = [];
-    let unsubStudents = null, unsubTasks = null, unsubExams = null, unsubResults = null;
+    let unsubStudents, unsubTasks, unsubExams, unsubResults;
 
-    // Helper toast
     function showToast(msg, type='info') {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -263,7 +237,6 @@
         setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
-    // Grados y áreas
     const allGrades = ["PRIMERO DE PRIMARIA","SEGUNDO DE PRIMARIA","TERCERO DE PRIMARIA","CUARTO DE PRIMARIA","QUINTO DE PRIMARIA","SEXTO DE PRIMARIA","PRIMERO DE SECUNDARIA","SEGUNDO DE SECUNDARIA","TERCERO DE SECUNDARIA","CUARTO DE SECUNDARIA","QUINTO DE SECUNDARIA"];
     const allAreas = ["Matemáticas","Comunicación","Ciencias Sociales","Ciencia y Tecnología","Personal Social","Inglés","Arte y Cultura","Educación Física","Computación","Educación Religiosa","Tutoría","EPT"];
 
@@ -272,28 +245,26 @@
         selects.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                const currentVal = el.value;
+                const current = el.value;
                 el.innerHTML = '<option value="">-- Seleccionar --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
-                if (currentVal && allGrades.includes(currentVal)) el.value = currentVal;
+                if (current && allGrades.includes(current)) el.value = current;
             }
         });
         const areaSelects = ['taskArea', 'examArea', 'filterArea'];
         areaSelects.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                const currentVal = el.value;
+                const current = el.value;
                 el.innerHTML = '<option value="">-- Seleccionar --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
-                if (currentVal && allAreas.includes(currentVal)) el.value = currentVal;
+                if (current && allAreas.includes(current)) el.value = current;
             }
         });
-        // Para filtros de tareas
         const filterGrade = document.getElementById('filterTasksGrade');
         if (filterGrade) filterGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
         const filterArea = document.getElementById('filterTasksArea');
         if (filterArea) filterArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
-    // Autenticación anónima
     signInAnonymously(auth).catch(e => console.error(e));
     onAuthStateChanged(auth, user => { currentUser = user; if (user) seedStudents(); });
 
@@ -309,36 +280,29 @@
         }
     }
 
-    // Cargar datos en tiempo real con gestión de suscripciones
     function loadData() {
         if (unsubStudents) unsubStudents();
         if (unsubTasks) unsubTasks();
         if (unsubExams) unsubExams();
         if (unsubResults) unsubResults();
-        
-        unsubStudents = onSnapshot(studentsRef, snap => { 
-            allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-            renderStudentsList(); 
-            renderGradesTable(); 
-        });
+        unsubStudents = onSnapshot(studentsRef, snap => { allStudents = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderStudentsList(); renderGradesTable(); });
         unsubTasks = onSnapshot(tasksRef, snap => { allTasks = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderTasksList(); });
         unsubExams = onSnapshot(examsRef, snap => { allExams = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderExamsList(); });
         unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
     }
 
-    // Funciones de renderizado docente
     function renderTasksList() {
         const container = document.getElementById('tasksList');
         if (!container) return;
         const grade = document.getElementById('filterTasksGrade')?.value || '';
         const area = document.getElementById('filterTasksArea')?.value || '';
-        let filtered = allTasks.filter(t => (!grade || t.grade === grade) && (!area || t.area === area));
+        const filtered = allTasks.filter(t => (!grade || t.grade === grade) && (!area || t.area === area));
         container.innerHTML = filtered.map(t => `
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden card-hover">
                 <div class="p-4">
                     <div class="font-bold text-lg text-indigo-700">${escapeHtml(t.title)}</div>
                     <div class="text-sm text-gray-500 mb-2">${t.area || 'Sin área'} · ${t.grade || 'Sin grado'}</div>
-                    <p class="text-gray-600 text-sm mb-3">${escapeHtml(t.description?.substring(0, 100))}${t.description?.length > 100 ? '...' : ''}</p>
+                    <p class="text-gray-600 text-sm mb-3">${escapeHtml(t.description?.substring(0,100))}${t.description?.length>100?'...':''}</p>
                     ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-flex items-center"><i class="fas fa-paperclip mr-1"></i> Archivo adjunto</a>` : ''}
                     ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm ml-3 inline-flex items-center"><i class="fas fa-link mr-1"></i> Enlace</a>` : ''}
                     <button class="delete-task mt-3 bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm w-full" data-id="${t.id}">Eliminar tarea</button>
@@ -412,13 +376,11 @@
                 </tr>
             `;
         }).join('');
-        // Eventos
         document.querySelectorAll('.view-results-btn').forEach(btn => btn.onclick = () => viewStudentAnswers(btn.dataset.resultId, btn.dataset.student, btn.dataset.examId));
         document.querySelectorAll('.download-report-btn').forEach(btn => btn.onclick = () => downloadPDFReport(btn.dataset.resultId, btn.dataset.student, btn.dataset.examId));
         document.querySelectorAll('.whatsapp-btn').forEach(btn => btn.onclick = () => { if(btn.dataset.phone) window.open(`https://wa.me/${btn.dataset.phone}?text=Resultado: ${btn.dataset.exam} - Nota: ${btn.dataset.grade}`); });
     }
 
-    // ========== REPORTE PDF ==========
     async function downloadPDFReport(resultId, studentName, examId) {
         try {
             const resultDoc = await getDoc(doc(resultsRef, resultId));
@@ -478,7 +440,7 @@
         modal.classList.add('flex');
     }
 
-    // ========== ESTUDIANTE ==========
+    // Estudiante funciones (resumidas pero funcionales)
     function renderStudentTasks() {
         const container = document.getElementById('studentTasksList');
         if (!container || !currentStudent) return;
@@ -487,13 +449,10 @@
             <div class="bg-white rounded-xl shadow-sm border p-4 card-hover">
                 <div class="font-bold text-indigo-700">${escapeHtml(t.title)}</div>
                 <div class="text-sm text-gray-500">${t.area || 'Sin área'}</div>
-                <p class="text-gray-600 text-sm my-2">${escapeHtml(t.description?.substring(0, 100))}</p>
+                <p class="text-gray-600 text-sm my-2">${escapeHtml(t.description?.substring(0,100))}</p>
                 ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-indigo-600 text-sm inline-block mb-2"><i class="fas fa-download"></i> Recurso guía</a>` : ''}
                 ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-600 text-sm inline-block ml-2"><i class="fas fa-external-link-alt"></i> Enlace</a>` : ''}
-                <div class="mt-3">
-                    <input type="file" id="file_${t.id}" class="text-sm w-full border p-1 rounded">
-                    <button class="submit-task mt-2 bg-emerald-500 text-white px-3 py-1 rounded-lg w-full" data-taskid="${t.id}" data-title="${escapeHtml(t.title)}" data-area="${escapeHtml(t.area)}">Entregar tarea</button>
-                </div>
+                <div class="mt-3"><input type="file" id="file_${t.id}" class="text-sm w-full border p-1 rounded"><button class="submit-task mt-2 bg-emerald-500 text-white px-3 py-1 rounded-lg w-full" data-taskid="${t.id}" data-title="${escapeHtml(t.title)}" data-area="${escapeHtml(t.area)}">Entregar tarea</button></div>
             </div>
         `).join('');
         document.querySelectorAll('.submit-task').forEach(btn => btn.onclick = async () => {
@@ -503,15 +462,11 @@
             const storageRef = ref(storage, `submissions/${currentStudent.id}_${taskId}_${Date.now()}_${file.name}`);
             await uploadBytes(storageRef, file);
             const url = await getDownloadURL(storageRef);
-            await addDoc(submissionsRef, {
-                studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
-                taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, fileURL: url, submittedAt: serverTimestamp()
-            });
+            await addDoc(submissionsRef, { studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade, taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, fileURL: url, submittedAt: serverTimestamp() });
             showToast("Tarea entregada", "success");
             document.getElementById(`file_${taskId}`).value = '';
         });
     }
-
     function renderStudentExams() {
         const container = document.getElementById('studentExamsList');
         if (!container || !currentStudent) return;
@@ -524,7 +479,6 @@
         `).join('');
         document.querySelectorAll('.take-exam').forEach(btn => btn.onclick = () => startExam(JSON.parse(btn.dataset.exam)));
     }
-
     async function startExam(exam) {
         const already = allResults.some(r => r.studentId === currentStudent.id && r.examId === exam.id);
         if (already) { showToast("Ya rendiste este examen", "info"); return; }
@@ -534,9 +488,7 @@
         questionsDiv.innerHTML = exam.questions.map((q, idx) => `
             <div class="mb-4 border-b pb-2">
                 <p class="font-semibold mb-2">${idx+1}. ${escapeHtml(q.text)}</p>
-                <div class="space-y-1 pl-4">
-                    ${q.options.map((opt, i) => `<label class="flex items-center gap-2"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}
-                </div>
+                <div class="space-y-1 pl-4">${q.options.map((opt, i) => `<label class="flex items-center gap-2"><input type="radio" name="q${idx}" value="${i}"> ${escapeHtml(opt)}</label>`).join('')}</div>
             </div>
         `).join('');
         modal.classList.remove('hidden');
@@ -550,10 +502,7 @@
         newCancel.onclick = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
         newSubmit.onclick = async () => {
             const answers = [];
-            exam.questions.forEach((_, idx) => {
-                const selected = document.querySelector(`input[name="q${idx}"]:checked`);
-                answers.push(selected ? parseInt(selected.value) : -1);
-            });
+            exam.questions.forEach((_, idx) => { const selected = document.querySelector(`input[name="q${idx}"]:checked`); answers.push(selected ? parseInt(selected.value) : -1); });
             let correct = 0;
             exam.questions.forEach((q, idx) => { if (answers[idx] === q.correct) correct++; });
             const percent = (correct / exam.questions.length) * 100;
@@ -561,24 +510,17 @@
             if (percent >= 90) grade = "AD";
             else if (percent >= 75) grade = "A";
             else if (percent >= 60) grade = "B";
-            const resultRef = await addDoc(resultsRef, {
-                studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
-                examId: exam.id, examTitle: exam.title, examArea: exam.area, grade, score: correct, total: exam.questions.length,
-                date: serverTimestamp(), answers
-            });
+            const resultRef = await addDoc(resultsRef, { studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade, examId: exam.id, examTitle: exam.title, examArea: exam.area, grade, score: correct, total: exam.questions.length, date: serverTimestamp(), answers });
             showToast(`Nota: ${grade} (${correct}/${exam.questions.length})`, "success");
             modal.classList.add('hidden');
             modal.classList.remove('flex');
             await downloadPDFReport(resultRef.id, currentStudent.name, exam.id);
             if (currentStudent.phones && currentStudent.phones[0]) {
-                if (confirm("¿Enviar resultado por WhatsApp a tus padres?")) {
-                    window.open(`https://wa.me/${currentStudent.phones[0].replace(/\s/g, '')}?text=Mi examen "${exam.title}" obtuve ${grade}`, '_blank');
-                }
+                if (confirm("¿Enviar resultado por WhatsApp a tus padres?")) window.open(`https://wa.me/${currentStudent.phones[0].replace(/\s/g, '')}?text=Mi examen "${exam.title}" obtuve ${grade}`, '_blank');
             }
             renderStudentGrades();
         };
     }
-
     function renderStudentGrades() {
         const container = document.getElementById('studentGradesList');
         if (!container || !currentStudent) return;
@@ -594,7 +536,7 @@
         document.querySelectorAll('.view-my-exam').forEach(btn => btn.onclick = () => viewStudentAnswers(btn.dataset.resultId, currentStudent.name, btn.dataset.examId));
     }
 
-    // ========== EVENTOS Y NAVEGACIÓN ==========
+    // ========== EVENTOS ==========
     document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
     document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
     document.getElementById('loginTeacher').onclick = () => {
@@ -604,12 +546,19 @@
             document.getElementById('teacherPanel').classList.remove('hidden');
             populateSelects();
             loadData();
+            // Auto-seleccionar primer grado para estudiantes (si hay alguno)
+            setTimeout(() => {
+                const gradeSelect = document.getElementById('filterStudentsGrade');
+                if (gradeSelect && gradeSelect.options.length > 1 && !gradeSelect.value) {
+                    gradeSelect.value = allGrades[0];
+                    renderStudentsList();
+                }
+            }, 500);
         } else showToast("Contraseña incorrecta");
     };
     document.getElementById('logoutTeacherPanel').onclick = () => {
         document.getElementById('teacherPanel').classList.add('hidden');
         document.getElementById('welcomeScreen').classList.remove('hidden');
-        // Limpiar suscripciones
         if (unsubStudents) unsubStudents();
         if (unsubTasks) unsubTasks();
         if (unsubExams) unsubExams();
@@ -639,11 +588,9 @@
         document.getElementById('studentNameSpan').innerText = currentStudent.name;
         document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
         renderStudentTasks(); renderStudentExams(); renderStudentGrades();
-        // Suscribirse a cambios en tiempo real para el estudiante
         const unsubTasksStud = onSnapshot(tasksRef, () => renderStudentTasks());
         const unsubExamsStud = onSnapshot(examsRef, () => renderStudentExams());
         const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
-        // Guardar para limpiar después
         window.studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
     };
     document.getElementById('closeStudentModal').onclick = () => document.getElementById('studentModal').classList.add('hidden');
@@ -676,22 +623,26 @@
     document.getElementById('publishTask').onclick = async () => {
         const title = document.getElementById('taskTitle').value.trim();
         if (!title) { showToast("El título es obligatorio", "error"); return; }
-        const grade = document.getElementById('taskGrade').value;
-        const area = document.getElementById('taskArea').value;
-        const desc = document.getElementById('taskDesc').value;
-        const file = document.getElementById('taskFile').files[0];
-        const link = document.getElementById('taskLink').value;
         const btn = document.getElementById('publishTask');
         btn.disabled = true;
         btn.innerHTML = '<div class="spinner"></div> Publicando...';
         try {
             let fileURL = null;
+            const file = document.getElementById('taskFile').files[0];
             if (file) {
                 const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`);
                 await uploadBytes(storageRef, file);
                 fileURL = await getDownloadURL(storageRef);
             }
-            await addDoc(tasksRef, { title, grade: grade || null, area: area || null, description: desc || null, fileURL, link: link || null, createdAt: serverTimestamp() });
+            await addDoc(tasksRef, {
+                title,
+                grade: document.getElementById('taskGrade').value || null,
+                area: document.getElementById('taskArea').value || null,
+                description: document.getElementById('taskDesc').value || null,
+                fileURL,
+                link: document.getElementById('taskLink').value || null,
+                createdAt: serverTimestamp()
+            });
             showToast("Tarea publicada correctamente", "success");
             document.getElementById('taskTitle').value = '';
             document.getElementById('taskDesc').value = '';
@@ -703,7 +654,7 @@
         finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
     };
 
-    // Generar descripción de tarea con IA
+    // Generar descripción con IA
     document.getElementById('generateTaskDesc').onclick = async () => {
         const topic = document.getElementById('taskTitle').value;
         if (!topic) return showToast("Escribe un título para generar la descripción");
@@ -716,14 +667,13 @@
                 body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 })
             });
             const data = await res.json();
-            const desc = data.choices[0].message.content;
-            document.getElementById('taskDesc').value = desc;
+            document.getElementById('taskDesc').value = data.choices[0].message.content;
             showToast("Descripción generada", "success");
         } catch(e) { showToast("Error al generar descripción", "error"); }
         finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Generar IA'; }
     };
 
-    // Generar preguntas con IA
+    // Generar preguntas con IA (similar al original)
     document.getElementById('generateQuestions').onclick = async () => {
         const topic = document.getElementById('examTopic').value;
         const num = parseInt(document.getElementById('numQuestions').value);
@@ -748,9 +698,7 @@
                 div.innerHTML = `
                     <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
                     <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        ${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}
-                    </div>
+                    <div class="grid grid-cols-2 gap-2">${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}</div>
                     <select class="correct-option mt-2 border p-2 rounded w-full">
                         <option value="0" ${q.correct===0?'selected':''}>Opción 1 correcta</option>
                         <option value="1" ${q.correct===1?'selected':''}>Opción 2 correcta</option>
@@ -789,25 +737,22 @@
         document.getElementById('numQuestions').value = '5';
     };
 
-    // Agregar estudiante con verificación de duplicados
+    // Agregar estudiante con duplicado
     document.getElementById('addStudent').onclick = async () => {
         const name = document.getElementById('newStudentName').value.trim().toUpperCase();
         const grade = document.getElementById('newStudentGrade').value;
         const phone = document.getElementById('newStudentPhone').value.trim();
         if (!name || !grade) return showToast("Nombre y grado requeridos");
-        // Verificar si ya existe un estudiante con el mismo nombre y grado
-        const existing = allStudents.some(s => s.name === name && s.grade === grade);
-        if (existing) { showToast("Ya existe un estudiante con ese nombre y grado", "error"); return; }
+        if (allStudents.some(s => s.name === name && s.grade === grade)) { showToast("Ya existe un estudiante con ese nombre y grado", "error"); return; }
         await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] });
         showToast("Estudiante agregado");
         document.getElementById('newStudentName').value = '';
         document.getElementById('newStudentPhone').value = '';
-        // Forzar actualización de la lista si el grado seleccionado es el mismo
         const selectedGrade = document.getElementById('filterStudentsGrade').value;
         if (selectedGrade === grade) renderStudentsList();
     };
 
-    // Filtros y refrescos
+    // Filtros
     document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
     document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
     document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
@@ -817,7 +762,6 @@
     document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
     document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
 
-    // Cerrar modal de respuestas
     document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
         document.getElementById('viewAnswersModal').classList.add('hidden');
         document.getElementById('viewAnswersModal').classList.remove('flex');
