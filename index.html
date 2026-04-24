@@ -74,7 +74,7 @@
     </div>
 </div>
 
-<!-- Panel Docente -->
+<!-- Panel Docente (resumido pero completo) -->
 <div id="teacherPanel" class="hidden min-h-screen bg-gray-50">
     <nav class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -226,7 +226,7 @@
     import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // ---------- Firebase ----------
+    // Configuración de Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
         authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -241,13 +241,14 @@
     const storage = getStorage(app);
     const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
 
-    // Referencias
+    // Referencias a colecciones
     const studentsRef = collection(db, 'students');
     const tasksRef = collection(db, 'tasks');
     const examsRef = collection(db, 'exams');
     const submissionsRef = collection(db, 'submissions');
     const resultsRef = collection(db, 'examResults');
 
+    // Variables globales
     let currentUser = null;
     let currentStudent = null;
     let allStudents = [], allTasks = [], allExams = [], allResults = [];
@@ -283,7 +284,6 @@
         if (filterGrade) filterGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
         const filterArea = document.getElementById('filterTasksArea');
         if (filterArea) filterArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
-        // Selects de filtros para exámenes
         const filterExamsGrade = document.getElementById('filterExamsGrade');
         if (filterExamsGrade) filterExamsGrade.innerHTML = '<option value="">-- Todos los grados --</option>' + allGrades.map(g => `<option value="${g}">${g}</option>`).join('');
         const filterExamsArea = document.getElementById('filterExamsArea');
@@ -315,7 +315,7 @@
         unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
     }
 
-    // Funciones de renderizado del docente
+    // Renderizado de listas (docente)
     function renderTasksList() {
         const container = document.getElementById('tasksList');
         if (!container) return;
@@ -679,8 +679,8 @@
         }
     }
 
-    // Inicialización general (se ejecuta al cargar la página)
-    async function initializeApp() {
+    // Función de inicialización principal (renombrada para evitar conflicto)
+    async function setupApp() {
         try {
             await signInAnonymously(auth);
             console.log("Autenticación anónima exitosa");
@@ -694,9 +694,9 @@
         }
     }
 
-    // Eventos de navegación (después de cargar el DOM)
+    // Registrar todos los eventos después de cargar el DOM
     document.addEventListener('DOMContentLoaded', () => {
-        // Botones de acceso
+        // Botones principales
         document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
         document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
         document.getElementById('loginTeacher').onclick = () => {
@@ -717,9 +717,7 @@
             document.getElementById('teacherPanel').classList.add('hidden');
             document.getElementById('welcomeScreen').classList.remove('hidden');
         };
-
         document.getElementById('studentBtn').onclick = async () => {
-            // Esperar a que allStudents tenga datos
             if (allStudents.length === 0) {
                 showToast("Cargando datos, espera un momento...", "info");
                 let waitCount = 0;
@@ -732,7 +730,7 @@
                 showToast("No se pudieron cargar los datos. Revisa tu conexión.", "error");
                 return;
             }
-            populateSelects(); // refrescar
+            populateSelects();
             resetSlider();
             document.getElementById('studentModal').classList.remove('hidden');
             const gradeSelect = document.getElementById('studentGradeSelect');
@@ -746,7 +744,6 @@
             loadNames();
             initSlider();
         };
-
         document.getElementById('enterStudent').onclick = () => {
             const val = document.getElementById('studentNameSelect').value;
             if (!val) return showToast("Selecciona tu nombre");
@@ -758,13 +755,11 @@
             document.getElementById('studentNameSpan').innerText = currentStudent.name;
             document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
             renderStudentTasks(); renderStudentExams(); renderStudentGrades();
-            // Suscripciones en tiempo real para el estudiante
             const unsubTasksStud = onSnapshot(tasksRef, () => renderStudentTasks());
             const unsubExamsStud = onSnapshot(examsRef, () => renderStudentExams());
             const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
             studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
         };
-
         document.getElementById('closeStudentModal').onclick = () => {
             document.getElementById('studentModal').classList.add('hidden');
             resetSlider();
@@ -776,7 +771,7 @@
             currentStudent = null;
         };
 
-        // Pestañas del docente
+        // Pestañas del docente y estudiante
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
@@ -785,7 +780,6 @@
                 document.getElementById(btn.dataset.tab).classList.remove('hidden');
             };
         });
-        // Pestañas del estudiante
         document.querySelectorAll('.student-tab-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.student-tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-600', 'text-white'));
@@ -795,7 +789,7 @@
             };
         });
 
-        // Publicar tarea
+        // Acciones del docente (tareas, exámenes, etc.)
         document.getElementById('publishTask').onclick = async () => {
             const title = document.getElementById('taskTitle').value.trim();
             if (!title) { showToast("El título es obligatorio", "error"); return; }
@@ -814,8 +808,6 @@
             } catch (error) { showToast("Error al publicar tarea", "error"); }
             finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
         };
-
-        // Generar descripción de tarea con IA
         document.getElementById('generateTaskDesc').onclick = async () => {
             const topic = document.getElementById('taskTitle').value;
             if (!topic) return showToast("Escribe un título para generar la descripción");
@@ -832,8 +824,6 @@
             } catch(e) { showToast("Error al generar descripción", "error"); }
             finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> Generar IA'; }
         };
-
-        // Generar preguntas con IA
         document.getElementById('generateQuestions').onclick = async () => {
             const topic = document.getElementById('examTopic').value;
             const num = parseInt(document.getElementById('numQuestions').value);
@@ -874,8 +864,6 @@
             } catch(e) { showToast("Error con IA, edita manualmente", "error"); }
             finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
         };
-
-        // Publicar examen
         document.getElementById('publishExam').onclick = async () => {
             const title = document.getElementById('examTitle').value;
             const grade = document.getElementById('examGrade').value;
@@ -894,8 +882,6 @@
             showToast("Examen publicado");
             document.getElementById('examTitle').value = ''; document.getElementById('examTopic').value = ''; document.getElementById('questionsEditor').innerHTML = ''; document.getElementById('numQuestions').value = '5';
         };
-
-        // Agregar estudiante (con verificación de duplicado)
         document.getElementById('addStudent').onclick = async () => {
             const name = document.getElementById('newStudentName').value.trim().toUpperCase();
             const grade = document.getElementById('newStudentGrade').value;
@@ -921,8 +907,6 @@
         document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
         document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
         document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
-
-        // Cerrar modal de respuestas
         document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
             document.getElementById('viewAnswersModal').classList.add('hidden');
             document.getElementById('viewAnswersModal').classList.remove('flex');
@@ -930,7 +914,7 @@
     });
 
     // Iniciar la aplicación
-    initializeApp();
+    setupApp();
 </script>
 </body>
 </html>
