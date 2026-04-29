@@ -15,7 +15,6 @@
         .toast.show { opacity: 1; }
         .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
         .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.02); }
-        /* Slider interactivo */
         .slider-container { background: #f3f4f6; border-radius: 9999px; padding: 4px; position: relative; cursor: pointer; user-select: none; transition: background 0.2s; }
         .slider-track { background: #cbd5e1; border-radius: 9999px; height: 8px; width: 100%; position: relative; }
         .slider-thumb { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; background: white; border-radius: 50%; box-shadow: 0 2px 6px rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; cursor: grab; transition: left 0.05s linear; left: 0%; }
@@ -24,6 +23,7 @@
         .slider-complete { background: #10b981; }
         .slider-complete .slider-thumb i { color: white; }
         .slider-complete .slider-track { background: #34d399; }
+        .modal-manual { transition: all 0.2s; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -74,7 +74,7 @@
     </div>
 </div>
 
-<!-- Panel Docente (resumido pero completo) -->
+<!-- Panel Docente -->
 <div id="teacherPanel" class="hidden min-h-screen bg-gray-50">
     <nav class="bg-white shadow-md border-b border-gray-200 sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -90,7 +90,7 @@
             <button class="tab-btn bg-gray-200 text-gray-700 px-5 py-2 rounded-t-lg transition" data-tab="studentsTab">👥 Estudiantes</button>
         </div>
 
-        <!-- Tareas -->
+        <!-- Tareas (sin cambios) -->
         <div id="tasksTab" class="tab-content">
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
                 <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-indigo-500 mr-2"></i>Nueva Tarea</h3>
@@ -118,7 +118,7 @@
             <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
-        <!-- Exámenes -->
+        <!-- Exámenes (con nuevas opciones de importación) -->
         <div id="examsTab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
                 <h3 class="text-lg font-bold mb-4 flex items-center"><i class="fas fa-robot text-purple-500 mr-2"></i>Crear Examen con IA</h3>
@@ -129,10 +129,13 @@
                 </div>
                 <div class="flex flex-col md:flex-row gap-4 mb-4">
                     <textarea id="examTopic" placeholder="Describe el tema para generar preguntas" class="border border-gray-300 p-3 rounded-lg flex-1" rows="2"></textarea>
-                    <div class="bg-gray-50 p-3 rounded-lg flex items-center gap-2">
+                    <div class="bg-gray-50 p-3 rounded-lg flex flex-wrap items-center gap-2">
                         <label class="font-semibold">Nº preguntas:</label>
                         <input type="number" id="numQuestions" value="5" min="1" class="border p-2 rounded w-20">
                         <button id="generateQuestions" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-bolt"></i> Generar IA</button>
+                        <button id="manualQuestionBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-plus-circle"></i> Añadir pregunta manual</button>
+                        <button id="importQuestionsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-file-import"></i> Importar desde texto</button>
+                        <button id="clearQuestionsBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"><i class="fas fa-trash-alt"></i> Limpiar todo</button>
                     </div>
                 </div>
                 <div id="questionsEditor" class="space-y-3 mb-4 max-h-96 overflow-auto"></div>
@@ -147,7 +150,7 @@
             <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </div>
 
-        <!-- Calificaciones (docente) -->
+        <!-- Calificaciones y Estudiantes (sin cambios) -->
         <div id="gradesTab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-sm p-6 mb-4">
                 <div class="flex flex-col sm:flex-row gap-4 mb-4">
@@ -157,14 +160,12 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse">
-                        <thead><tr class="bg-gray-100 border-b"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
+                        <thead><tr class="bg-gray-100 border-b"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></td></thead>
                         <tbody id="gradesTableBody"></tbody>
                     </table>
                 </div>
             </div>
         </div>
-
-        <!-- Estudiantes -->
         <div id="studentsTab" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-sm p-6">
                 <h3 class="text-lg font-bold mb-4">Agregar estudiante</h3>
@@ -184,7 +185,7 @@
     </div>
 </div>
 
-<!-- Panel Estudiante -->
+<!-- Panel Estudiante (sin cambios) -->
 <div id="studentPanel" class="hidden min-h-screen bg-gray-50">
     <nav class="bg-white shadow-md border-b sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -204,7 +205,7 @@
     </div>
 </div>
 
-<!-- Modales de examen y ver respuestas -->
+<!-- Modales de examen y ver respuestas (sin cambios) -->
 <div id="examTakeModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4 overflow-auto">
     <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
         <h2 id="examTakeTitle" class="text-xl font-bold mb-4"></h2>
@@ -220,13 +221,67 @@
     </div>
 </div>
 
+<!-- Modal para añadir pregunta manual -->
+<div id="manualQuestionModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4 modal-manual">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-xl">
+        <h2 class="text-xl font-bold mb-4">Agregar pregunta manualmente</h2>
+        <div class="mb-3">
+            <label class="block font-semibold mb-1">Texto de la pregunta</label>
+            <textarea id="manualQuestionText" rows="2" class="w-full border border-gray-300 p-2 rounded-lg" placeholder="Escribe la pregunta..."></textarea>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+            <div><label class="block font-semibold mb-1">Opción 1</label><input type="text" id="manualOption0" class="w-full border p-2 rounded-lg" placeholder="Opción A"></div>
+            <div><label class="block font-semibold mb-1">Opción 2</label><input type="text" id="manualOption1" class="w-full border p-2 rounded-lg" placeholder="Opción B"></div>
+            <div><label class="block font-semibold mb-1">Opción 3</label><input type="text" id="manualOption2" class="w-full border p-2 rounded-lg" placeholder="Opción C"></div>
+            <div><label class="block font-semibold mb-1">Opción 4</label><input type="text" id="manualOption3" class="w-full border p-2 rounded-lg" placeholder="Opción D"></div>
+        </div>
+        <div class="mb-4">
+            <label class="block font-semibold mb-1">Respuesta correcta</label>
+            <select id="manualCorrect" class="w-full border p-2 rounded-lg">
+                <option value="0">Opción 1</option>
+                <option value="1">Opción 2</option>
+                <option value="2">Opción 3</option>
+                <option value="3">Opción 4</option>
+            </select>
+        </div>
+        <div class="flex justify-end gap-3">
+            <button id="closeManualModal" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button>
+            <button id="addManualQuestionBtn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg">Agregar pregunta</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para importar preguntas desde texto -->
+<div id="importQuestionsModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4 modal-manual">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-3xl shadow-xl">
+        <h2 class="text-xl font-bold mb-4">Importar preguntas desde texto</h2>
+        <p class="text-sm text-gray-600 mb-2">Pega aquí el bloque de preguntas (formato: número, pregunta, opciones con a), b), c), d)). Las respuestas correctas no se detectan; deberás ajustarlas manualmente en el editor después.</p>
+        <textarea id="importTextArea" rows="15" class="w-full border border-gray-300 p-2 rounded-lg font-mono text-sm" placeholder="Ejemplo:
+1. ¿Cuál es la función principal del botón izquierdo del mouse?
+a) Cambiar el color
+b) Lanzar bola
+c) Cerrar ventana
+d) Mover cursor
+
+2. ¿Cómo debemos presionar los botones?
+a) Con mucha fuerza
+b) Con un clic suave
+c) Con dos manos
+d) Golpeando"></textarea>
+        <div class="flex justify-end gap-3 mt-4">
+            <button id="closeImportModal" class="bg-gray-300 px-4 py-2 rounded-lg">Cancelar</button>
+            <button id="processImportBtn" class="bg-blue-600 text-white px-4 py-2 rounded-lg">Procesar e importar</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-    // Configuración de Firebase
+    // ---------- Firebase Config ----------
     const firebaseConfig = {
         apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
         authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -241,25 +296,22 @@
     const storage = getStorage(app);
     const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
 
-    // Referencias a colecciones
+    // Referencias
     const studentsRef = collection(db, 'students');
     const tasksRef = collection(db, 'tasks');
     const examsRef = collection(db, 'exams');
     const submissionsRef = collection(db, 'submissions');
     const resultsRef = collection(db, 'examResults');
 
-    // Variables globales
     let currentUser = null;
     let currentStudent = null;
     let allStudents = [], allTasks = [], allExams = [], allResults = [];
     let unsubStudents, unsubTasks, unsubExams, unsubResults;
     let studentUnsubs = [];
 
-    // Grados y áreas
     const allGrades = ["PRIMERO DE PRIMARIA","SEGUNDO DE PRIMARIA","TERCERO DE PRIMARIA","CUARTO DE PRIMARIA","QUINTO DE PRIMARIA","SEXTO DE PRIMARIA","PRIMERO DE SECUNDARIA","SEGUNDO DE SECUNDARIA","TERCERO DE SECUNDARIA","CUARTO DE SECUNDARIA","QUINTO DE SECUNDARIA"];
     const allAreas = ["Matemáticas","Comunicación","Ciencias Sociales","Ciencia y Tecnología","Personal Social","Inglés","Arte y Cultura","Educación Física","Computación","Educación Religiosa","Tutoría","EPT"];
 
-    // Helpers
     function showToast(msg, type='info') {
         const toast = document.getElementById('toast');
         toast.textContent = msg;
@@ -268,7 +320,6 @@
     }
     function escapeHtml(s) { return s ? s.replace(/[&<>]/g, m => m==='&'?'&amp;':m==='<'?'&lt;':'&gt;') : ''; }
 
-    // Poblar selects
     function populateSelects() {
         const selects = ['taskGrade', 'examGrade', 'newStudentGrade', 'filterStudentsGrade', 'filterGrade', 'studentGradeSelect'];
         selects.forEach(id => {
@@ -290,7 +341,6 @@
         if (filterExamsArea) filterExamsArea.innerHTML = '<option value="">-- Todas las áreas --</option>' + allAreas.map(a => `<option value="${a}">${a}</option>`).join('');
     }
 
-    // Sembrar estudiantes iniciales
     async function seedStudents() {
         const snap = await getDocs(studentsRef);
         if (snap.empty) {
@@ -303,7 +353,6 @@
         }
     }
 
-    // Sincronización en tiempo real (se ejecuta al inicio)
     function initFirebaseSync() {
         if (unsubStudents) unsubStudents();
         if (unsubTasks) unsubTasks();
@@ -315,8 +364,8 @@
         unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
     }
 
-    // Renderizado de listas (docente)
-    function renderTasksList() {
+    // Funciones de renderizado docente (cortas, igual que antes)
+    function renderTasksList() { /* se mantiene igual */ 
         const container = document.getElementById('tasksList');
         if (!container) return;
         const grade = document.getElementById('filterTasksGrade')?.value || '';
@@ -336,8 +385,7 @@
         `).join('');
         document.querySelectorAll('.delete-task').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(tasksRef, btn.dataset.id)); showToast("Tarea eliminada"); });
     }
-
-    function renderExamsList() {
+    function renderExamsList() { /* igual */ 
         const container = document.getElementById('examsList');
         if (!container) return;
         const grade = document.getElementById('filterExamsGrade')?.value || '';
@@ -353,8 +401,7 @@
         `).join('');
         document.querySelectorAll('.delete-exam').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(examsRef, btn.dataset.id)); showToast("Examen eliminado"); });
     }
-
-    function renderStudentsList() {
+    function renderStudentsList() { /* igual */ 
         const container = document.getElementById('studentsList');
         const gradeSelect = document.getElementById('filterStudentsGrade');
         if (!container || !gradeSelect) return;
@@ -370,8 +417,7 @@
         `).join('');
         document.querySelectorAll('.delete-student').forEach(btn => btn.onclick = async () => { await deleteDoc(doc(studentsRef, btn.dataset.id)); showToast("Estudiante eliminado"); });
     }
-
-    async function renderGradesTable() {
+    async function renderGradesTable() { /* igual */ 
         const tbody = document.getElementById('gradesTableBody');
         if (!tbody) return;
         const gradeFilter = document.getElementById('filterGrade')?.value;
@@ -406,8 +452,7 @@
         document.querySelectorAll('.whatsapp-btn').forEach(btn => btn.onclick = () => { if(btn.dataset.phone) window.open(`https://wa.me/${btn.dataset.phone}?text=Resultado: ${btn.dataset.exam} - Nota: ${btn.dataset.grade}`); });
     }
 
-    // Reporte PDF
-    async function downloadPDFReport(resultId, studentName, examId) {
+    async function downloadPDFReport(resultId, studentName, examId) { /* igual */ 
         try {
             const resultDoc = await getDoc(doc(resultsRef, resultId));
             if (!resultDoc.exists()) throw new Error();
@@ -441,7 +486,7 @@
         } catch(e) { showToast("Error al generar reporte", "error"); }
     }
 
-    async function viewStudentAnswers(resultId, studentName, examId) {
+    async function viewStudentAnswers(resultId, studentName, examId) { /* igual */ 
         const resultDoc = await getDoc(doc(resultsRef, resultId));
         if (!resultDoc.exists()) return showToast("No encontrado");
         const result = resultDoc.data();
@@ -466,8 +511,8 @@
         modal.classList.add('flex');
     }
 
-    // Funciones del estudiante
-    function renderStudentTasks() {
+    // Funciones del estudiante (iguales)
+    function renderStudentTasks() { /* igual */ 
         const container = document.getElementById('studentTasksList');
         if (!container || !currentStudent) return;
         const tasks = allTasks.filter(t => t.grade === currentStudent.grade);
@@ -499,8 +544,7 @@
             document.getElementById(`file_${taskId}`).value = '';
         });
     }
-
-    function renderStudentExams() {
+    function renderStudentExams() { /* igual */ 
         const container = document.getElementById('studentExamsList');
         if (!container || !currentStudent) return;
         const exams = allExams.filter(e => e.grade === currentStudent.grade);
@@ -512,8 +556,7 @@
         `).join('');
         document.querySelectorAll('.take-exam').forEach(btn => btn.onclick = () => startExam(JSON.parse(btn.dataset.exam)));
     }
-
-    function renderStudentGrades() {
+    function renderStudentGrades() { /* igual */ 
         const container = document.getElementById('studentGradesList');
         if (!container || !currentStudent) return;
         const myResults = allResults.filter(r => r.studentId === currentStudent.id);
@@ -579,14 +622,14 @@
         };
     }
 
-    // Slider interactivo
+    // Slider (todo igual)
     let sliderDragging = false;
     let sliderStartX = 0;
     let sliderThumbLeft = 0;
     const sliderContainer = document.getElementById('sliderContainer');
     const sliderThumb = document.getElementById('sliderThumb');
     const enterBtn = document.getElementById('enterStudent');
-    function initSlider() {
+    function initSlider() { /* mismo código */ 
         if (!sliderContainer || !sliderThumb) return;
         const containerRect = sliderContainer.getBoundingClientRect();
         const maxLeft = containerRect.width - sliderThumb.offsetWidth;
@@ -679,7 +722,98 @@
         }
     }
 
-    // Función de inicialización principal (renombrada para evitar conflicto)
+    // ========== NUEVA FUNCIÓN PARA IMPORTAR PREGUNTAS DESDE TEXTO ==========
+    function parseAndImportQuestions(text) {
+        const lines = text.split(/\r?\n/);
+        let questions = [];
+        let currentQuestion = null;
+        let currentOptions = [];
+        
+        // Patrones para detectar número de pregunta (1., 2., etc.)
+        const questionPattern = /^\s*(\d+)\.\s+(.+)/;
+        // Patrón para opción: a) texto, b) texto, etc. (con o sin espacio después del paréntesis)
+        const optionPattern = /^\s*([a-d])[\)\.]\s*(.+)/i; // a) o a.
+        
+        for (let line of lines) {
+            line = line.trim();
+            if (line === "") continue;
+            
+            // Intentar coincidir con pregunta
+            const qMatch = line.match(questionPattern);
+            if (qMatch) {
+                // Guardar pregunta anterior si existe
+                if (currentQuestion && currentOptions.length === 4) {
+                    questions.push({
+                        text: currentQuestion,
+                        options: [...currentOptions],
+                        correct: 0  // Por defecto primera opción, luego el docente puede corregir
+                    });
+                }
+                currentQuestion = qMatch[2];
+                currentOptions = [];
+                continue;
+            }
+            
+            // Intentar coincidir con opción
+            const optMatch = line.match(optionPattern);
+            if (optMatch && currentQuestion !== null) {
+                const optionLetter = optMatch[1].toLowerCase();
+                const optionText = optMatch[2];
+                // Convertir letra a índice 0-3
+                const index = optionLetter.charCodeAt(0) - 97; // 'a' = 0, 'b'=1, etc.
+                if (index >= 0 && index <= 3) {
+                    // Asegurar que haya al menos 4 opciones (rellenar con vacías si faltan)
+                    while (currentOptions.length < index) currentOptions.push("");
+                    currentOptions[index] = optionText;
+                }
+                continue;
+            }
+            
+            // Si la línea no es pregunta ni opción, podría ser continuación de una pregunta (ej: varias líneas)
+            if (currentQuestion !== null && !optMatch && !qMatch) {
+                currentQuestion += " " + line;
+            }
+        }
+        // Agregar última pregunta
+        if (currentQuestion && currentOptions.length === 4) {
+            questions.push({
+                text: currentQuestion,
+                options: [...currentOptions],
+                correct: 0
+            });
+        }
+        
+        if (questions.length === 0) {
+            showToast("No se encontraron preguntas en el texto. Asegúrate del formato: número. pregunta y opciones con a) ...", "error");
+            return false;
+        }
+        
+        // Agregar cada pregunta al editor
+        const editor = document.getElementById('questionsEditor');
+        for (const q of questions) {
+            const div = document.createElement('div');
+            div.className = 'border rounded-lg p-3 bg-gray-50 relative exam-question-edit';
+            div.innerHTML = `
+                <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
+                <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
+                <div class="grid grid-cols-2 gap-2">
+                    ${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="border p-2 rounded">`).join('')}
+                </div>
+                <select class="correct-option mt-2 border p-2 rounded w-full">
+                    <option value="0" ${q.correct === 0 ? 'selected' : ''}>Opción 1 correcta</option>
+                    <option value="1" ${q.correct === 1 ? 'selected' : ''}>Opción 2 correcta</option>
+                    <option value="2" ${q.correct === 2 ? 'selected' : ''}>Opción 3 correcta</option>
+                    <option value="3" ${q.correct === 3 ? 'selected' : ''}>Opción 4 correcta</option>
+                </select>
+            `;
+            editor.appendChild(div);
+            div.querySelector('.remove-question').onclick = function() { div.remove(); };
+        }
+        showToast(`Se importaron ${questions.length} preguntas. Revisa las respuestas correctas en el editor.`, "success");
+        return true;
+    }
+
+    // Inicialización
     async function setupApp() {
         try {
             await signInAnonymously(auth);
@@ -694,7 +828,84 @@
         }
     }
 
-    // Registrar todos los eventos después de cargar el DOM
+    // Modal manual (ya existente)
+    const manualModal = document.getElementById('manualQuestionModal');
+    const openManualBtn = document.getElementById('manualQuestionBtn');
+    const closeManualBtn = document.getElementById('closeManualModal');
+    const addManualBtn = document.getElementById('addManualQuestionBtn');
+    const clearQuestionsBtn = document.getElementById('clearQuestionsBtn');
+
+    openManualBtn.onclick = () => manualModal.classList.remove('hidden');
+    closeManualBtn.onclick = () => manualModal.classList.add('hidden');
+    addManualBtn.onclick = () => {
+        const text = document.getElementById('manualQuestionText').value.trim();
+        const opt0 = document.getElementById('manualOption0').value.trim();
+        const opt1 = document.getElementById('manualOption1').value.trim();
+        const opt2 = document.getElementById('manualOption2').value.trim();
+        const opt3 = document.getElementById('manualOption3').value.trim();
+        const correct = parseInt(document.getElementById('manualCorrect').value);
+        if (!text) { showToast("Debe escribir la pregunta", "error"); return; }
+        if (!opt0 || !opt1 || !opt2 || !opt3) { showToast("Complete todas las opciones", "error"); return; }
+        const editor = document.getElementById('questionsEditor');
+        const div = document.createElement('div');
+        div.className = 'border rounded-lg p-3 bg-gray-50 relative exam-question-edit';
+        div.innerHTML = `
+            <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
+            <input type="text" placeholder="Pregunta" value="${escapeHtml(text)}" class="w-full border p-2 rounded mb-2">
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" placeholder="Opción 1" value="${escapeHtml(opt0)}" class="border p-2 rounded">
+                <input type="text" placeholder="Opción 2" value="${escapeHtml(opt1)}" class="border p-2 rounded">
+                <input type="text" placeholder="Opción 3" value="${escapeHtml(opt2)}" class="border p-2 rounded">
+                <input type="text" placeholder="Opción 4" value="${escapeHtml(opt3)}" class="border p-2 rounded">
+            </div>
+            <select class="correct-option mt-2 border p-2 rounded w-full">
+                <option value="0" ${correct === 0 ? 'selected' : ''}>Opción 1 correcta</option>
+                <option value="1" ${correct === 1 ? 'selected' : ''}>Opción 2 correcta</option>
+                <option value="2" ${correct === 2 ? 'selected' : ''}>Opción 3 correcta</option>
+                <option value="3" ${correct === 3 ? 'selected' : ''}>Opción 4 correcta</option>
+            </select>
+        `;
+        editor.appendChild(div);
+        div.querySelector('.remove-question').onclick = function() { div.remove(); };
+        // Limpiar campos
+        document.getElementById('manualQuestionText').value = '';
+        document.getElementById('manualOption0').value = '';
+        document.getElementById('manualOption1').value = '';
+        document.getElementById('manualOption2').value = '';
+        document.getElementById('manualOption3').value = '';
+        document.getElementById('manualCorrect').value = '0';
+        manualModal.classList.add('hidden');
+        showToast("Pregunta agregada manualmente", "success");
+    };
+    clearQuestionsBtn.onclick = () => {
+        if (confirm("¿Eliminar todas las preguntas del editor?")) {
+            document.getElementById('questionsEditor').innerHTML = '';
+            showToast("Todas las preguntas eliminadas", "success");
+        }
+    };
+
+    // Modal de importación
+    const importModal = document.getElementById('importQuestionsModal');
+    const openImportBtn = document.getElementById('importQuestionsBtn');
+    const closeImportBtn = document.getElementById('closeImportModal');
+    const processImportBtn = document.getElementById('processImportBtn');
+
+    openImportBtn.onclick = () => importModal.classList.remove('hidden');
+    closeImportBtn.onclick = () => importModal.classList.add('hidden');
+    processImportBtn.onclick = () => {
+        const text = document.getElementById('importTextArea').value;
+        if (!text.trim()) {
+            showToast("Pega el texto con las preguntas", "error");
+            return;
+        }
+        const success = parseAndImportQuestions(text);
+        if (success) {
+            importModal.classList.add('hidden');
+            document.getElementById('importTextArea').value = '';
+        }
+    };
+
+    // Registrar eventos después de cargar DOM
     document.addEventListener('DOMContentLoaded', () => {
         // Botones principales
         document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
@@ -771,7 +982,7 @@
             currentStudent = null;
         };
 
-        // Pestañas del docente y estudiante
+        // Pestañas
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-indigo-600', 'text-white'));
@@ -789,7 +1000,7 @@
             };
         });
 
-        // Acciones del docente (tareas, exámenes, etc.)
+        // Acciones del docente (tareas, exámenes con IA, etc.) - igual que antes
         document.getElementById('publishTask').onclick = async () => {
             const title = document.getElementById('taskTitle').value.trim();
             if (!title) { showToast("El título es obligatorio", "error"); return; }
@@ -843,7 +1054,7 @@
                 editor.innerHTML = '';
                 questions.forEach((q, idx) => {
                     const div = document.createElement('div');
-                    div.className = 'border rounded-lg p-3 bg-gray-50 relative';
+                    div.className = 'border rounded-lg p-3 bg-gray-50 relative exam-question-edit';
                     div.innerHTML = `
                         <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
                         <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full border p-2 rounded mb-2">
@@ -858,8 +1069,8 @@
                         </select>
                     `;
                     editor.appendChild(div);
+                    div.querySelector('.remove-question').onclick = function() { div.remove(); };
                 });
-                document.querySelectorAll('.remove-question').forEach(btn => btn.onclick = function() { this.closest('.border').remove(); });
                 showToast("Preguntas generadas", "success");
             } catch(e) { showToast("Error con IA, edita manualmente", "error"); }
             finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
@@ -895,7 +1106,7 @@
             if (selectedGrade === grade) renderStudentsList();
         };
 
-        // Filtros y refrescos
+        // Filtros
         document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
         document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
         document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
@@ -913,7 +1124,6 @@
         });
     });
 
-    // Iniciar la aplicación
     setupApp();
 </script>
 </body>
