@@ -131,7 +131,7 @@
 <div id="toast" class="toast"></div>
 
 <div class="content relative min-h-screen">
-    <!-- Dashboard de calificaciones (esquina superior derecha) -->
+    <!-- Dashboard de calificaciones -->
     <div class="fixed top-6 right-6 z-50 flex gap-2 bg-black/40 backdrop-blur-md p-2 rounded-2xl border border-cyan-500/30">
         <div class="grade-block" style="border-left-color: #00ffcc;">AD</div>
         <div class="grade-block" style="border-left-color: #3b82f6;">A</div>
@@ -139,7 +139,7 @@
         <div class="grade-block" style="border-left-color: #ef4444;">C</div>
     </div>
 
-    <!-- Pantalla de bienvenida (sin título grande) -->
+    <!-- Pantalla de bienvenida -->
     <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-screen p-6">
         <div class="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-6xl mx-auto mt-8">
             <div class="icon-3d flex flex-col items-center p-5" id="infoUploadBtn">
@@ -219,7 +219,7 @@
                 <button class="tab-btn bg-gray-800 text-gray-300 px-5 py-2 rounded-t-lg" data-tab="studentsTab">📁 INFO UPLOAD / ESTUDIANTES</button>
             </div>
 
-            <!-- TAREAS (HOMEWORK) -->
+            <!-- TAREAS -->
             <div id="tasksTab" class="tab-content">
                 <div class="glass-card p-6 mb-8">
                     <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-cyan-400 mr-2"></i>Nueva Tarea</h3>
@@ -365,11 +365,18 @@
             <div class="flex justify-end gap-3"><button id="closeManualModal" class="bg-gray-600 px-4 py-2 rounded-lg">Cancelar</button><button id="addManualQuestionBtn" class="bg-emerald-600 px-4 py-2 rounded-lg">Agregar</button></div>
         </div>
     </div>
+
+    <!-- MODAL DE IMPORTACIÓN MEJORADO CON DETECCIÓN DE RESPUESTAS CORRECTAS POR IA -->
     <div id="importQuestionsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
         <div class="bg-gray-900/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-3xl border border-cyan-500/50">
             <h2 class="text-xl font-bold mb-4">Importar preguntas desde texto</h2>
             <textarea id="importTextArea" rows="12" class="w-full bg-gray-800 border border-cyan-500 p-2 rounded-lg font-mono text-sm"></textarea>
-            <div class="flex justify-end gap-3 mt-4"><button id="closeImportModal" class="bg-gray-600 px-4 py-2 rounded-lg">Cancelar</button><button id="processImportBtn" class="bg-blue-600 px-4 py-2 rounded-lg">Procesar</button></div>
+            <div class="flex flex-wrap justify-end gap-3 mt-4">
+                <button id="closeImportModal" class="bg-gray-600 px-4 py-2 rounded-lg">Cancelar</button>
+                <button id="processImportSimpleBtn" class="bg-blue-600 px-4 py-2 rounded-lg">📄 Importar (sin respuestas)</button>
+                <button id="processImportWithAIBtn" class="bg-purple-600 px-4 py-2 rounded-lg">🤖 Importar + Detectar respuestas con IA</button>
+            </div>
+            <div id="importStatus" class="text-sm text-cyan-400 mt-3 hidden"></div>
         </div>
     </div>
 
@@ -379,7 +386,9 @@
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Firebase config (proporcionada)
+        // ------------------------------------------------------------------
+        // CONFIGURACIÓN FIREBASE (PROPORCIONADA)
+        // ------------------------------------------------------------------
         const firebaseConfig = {
             apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
             authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -462,7 +471,7 @@
             unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
         }
 
-        // Renderizado de listas (docente)
+        // ========== FUNCIONES DOCENTE ==========
         function renderTasksList() {
             const container = document.getElementById('tasksList');
             if (!container) return;
@@ -521,13 +530,13 @@
             if (!tbody) return;
             const gradeFilter = document.getElementById('filterGrade')?.value;
             const areaFilter = document.getElementById('filterArea')?.value;
-            if (!gradeFilter || !areaFilter) { tbody.innerHTML = '<td><td colspan="5">Selecciona grado y área</td></tr>'; return; }
+            if (!gradeFilter || !areaFilter) { tbody.innerHTML = '<tr><td colspan="5">Selecciona grado y área</td></tr>'; return; }
             const filtered = allResults.filter(r => {
                 const student = allStudents.find(s => s.id === r.studentId);
                 const exam = allExams.find(e => e.id === r.examId);
                 return student?.grade === gradeFilter && exam?.area === areaFilter;
             });
-            if (filtered.length === 0) { tbody.innerHTML = '<td><td colspan="5">No hay calificaciones</td></tr>'; return; }
+            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></tr>'; return; }
             tbody.innerHTML = filtered.map(r => {
                 const student = allStudents.find(s => s.id === r.studentId);
                 const studentName = student?.name || 'Desconocido';
@@ -544,7 +553,7 @@
                             <button class="whatsapp-btn text-green-400" data-phone="${phone}" data-grade="${r.grade}" data-exam="${escapeHtml(r.examTitle)}">WhatsApp</button>
                         </td>
                         <td class="p-3 text-xs text-gray-400">${r.date ? new Date(r.date.toMillis()).toLocaleDateString() : ''}</td>
-                    </tr>
+                    </table>
                 `;
             }).join('');
             document.querySelectorAll('.view-results-btn').forEach(btn => btn.onclick = () => viewStudentAnswers(btn.dataset.resultId, btn.dataset.student, btn.dataset.examId));
@@ -611,7 +620,7 @@
             modal.classList.add('flex');
         }
 
-        // Funciones del estudiante
+        // ========== FUNCIONES ESTUDIANTE ==========
         async function evaluateLinkWithAI(url, submissionId) {
             try {
                 const prompt = `Eres un profesor experto. Evalúa el siguiente enlace enviado por un estudiante como tarea: "${url}". Asigna una calificación (AD, A, B o C) y proporciona retroalimentación breve (máximo 100 palabras). Responde en el formato: CALIFICACIÓN: (letra) | COMENTARIO: (texto)`;
@@ -785,7 +794,7 @@
             };
         }
 
-        // Slider interactivo
+        // ========== SLIDER INTERACTIVO ==========
         let sliderDragging = false;
         let sliderStartX = 0;
         let sliderThumbLeft = 0;
@@ -885,8 +894,27 @@
             }
         }
 
-        // Parsear e importar preguntas desde texto
-        function parseAndImportQuestions(text) {
+        // ========== FUNCIONES DE IMPORTACIÓN CON DETECCIÓN DE RESPUESTAS CORRECTAS POR IA ==========
+        async function detectCorrectAnswersWithAI(questions) {
+            const prompt = `Eres un profesor experto. Para cada una de las siguientes preguntas de opción múltiple, determina cuál es la respuesta correcta (índice 0-3). Devuelve SOLO un array JSON con los índices de la respuesta correcta en el mismo orden de las preguntas. Formato: [0, 2, 1, ...].\n\nPreguntas:\n${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j) => `${String.fromCharCode(65+j)}. ${opt}`).join('\n')}`).join('\n\n')}`;
+            try {
+                const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
+                    body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }], temperature: 0 })
+                });
+                const data = await res.json();
+                const content = data.choices[0].message.content;
+                const match = content.match(/\[[\d, ]+\]/);
+                if (match) {
+                    const indices = JSON.parse(match[0]);
+                    return indices;
+                }
+                return null;
+            } catch(e) { console.error(e); return null; }
+        }
+
+        function parseQuestionsFromText(text) {
             const lines = text.split(/\r?\n/);
             let questions = [];
             let currentQuestion = null;
@@ -899,7 +927,7 @@
                 const qMatch = line.match(questionPattern);
                 if (qMatch) {
                     if (currentQuestion && currentOptions.length === 4) {
-                        questions.push({ text: currentQuestion, options: [...currentOptions], correct: 0 });
+                        questions.push({ text: currentQuestion, options: [...currentOptions], correct: -1 });
                     }
                     currentQuestion = qMatch[2];
                     currentOptions = [];
@@ -915,8 +943,54 @@
                 }
             }
             if (currentQuestion && currentOptions.length === 4) {
-                questions.push({ text: currentQuestion, options: [...currentOptions], correct: 0 });
+                questions.push({ text: currentQuestion, options: [...currentOptions], correct: -1 });
             }
+            return questions;
+        }
+
+        async function importQuestionsWithAI(text) {
+            const questions = parseQuestionsFromText(text);
+            if (questions.length === 0) { showToast("No se encontraron preguntas en el texto", "error"); return false; }
+            const statusDiv = document.getElementById('importStatus');
+            statusDiv.classList.remove('hidden');
+            statusDiv.innerHTML = '<div class="spinner"></div> Analizando respuestas correctas con IA...';
+            const correctIndices = await detectCorrectAnswersWithAI(questions);
+            if (correctIndices && correctIndices.length === questions.length) {
+                for (let i = 0; i < questions.length; i++) {
+                    questions[i].correct = correctIndices[i];
+                }
+                statusDiv.innerHTML = '✅ Respuestas detectadas correctamente.';
+            } else {
+                statusDiv.innerHTML = '⚠️ No se pudieron detectar las respuestas. Se asignarán la opción 1 por defecto. Deberás corregirlas manualmente.';
+                for (let i = 0; i < questions.length; i++) questions[i].correct = 0;
+            }
+            const editor = document.getElementById('questionsEditor');
+            for (const q of questions) {
+                const div = document.createElement('div');
+                div.className = 'border rounded-lg p-3 bg-gray-800/70 relative exam-question-edit';
+                div.innerHTML = `
+                    <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
+                    <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2">
+                    <div class="grid grid-cols-2 gap-2">
+                        ${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}
+                    </div>
+                    <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full">
+                        <option value="0" ${q.correct === 0 ? 'selected' : ''}>Opción 1 correcta</option>
+                        <option value="1" ${q.correct === 1 ? 'selected' : ''}>Opción 2 correcta</option>
+                        <option value="2" ${q.correct === 2 ? 'selected' : ''}>Opción 3 correcta</option>
+                        <option value="3" ${q.correct === 3 ? 'selected' : ''}>Opción 4 correcta</option>
+                    </select>
+                `;
+                editor.appendChild(div);
+                div.querySelector('.remove-question').onclick = function() { div.remove(); };
+            }
+            setTimeout(() => statusDiv.classList.add('hidden'), 3000);
+            showToast(`Se importaron ${questions.length} preguntas con respuestas correctas detectadas.`, "success");
+            return true;
+        }
+
+        function importQuestionsSimple(text) {
+            const questions = parseQuestionsFromText(text);
             if (questions.length === 0) { showToast("No se encontraron preguntas en el texto", "error"); return false; }
             const editor = document.getElementById('questionsEditor');
             for (const q of questions) {
@@ -929,24 +1003,27 @@
                         ${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}
                     </div>
                     <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full">
-                        <option value="0">Opción 1 correcta</option><option value="1">Opción 2 correcta</option><option value="2">Opción 3 correcta</option><option value="3">Opción 4 correcta</option>
+                        <option value="0" selected>Opción 1 correcta</option>
+                        <option value="1">Opción 2 correcta</option>
+                        <option value="2">Opción 3 correcta</option>
+                        <option value="3">Opción 4 correcta</option>
                     </select>
                 `;
                 editor.appendChild(div);
                 div.querySelector('.remove-question').onclick = function() { div.remove(); };
             }
-            showToast(`Se importaron ${questions.length} preguntas. Revisa las respuestas correctas.`, "success");
+            showToast(`Se importaron ${questions.length} preguntas. Recuerda verificar las respuestas correctas.`, "info");
             return true;
         }
 
-        // Inicialización
+        // ========== INICIALIZACIÓN Y EVENTOS ==========
         async function setupApp() {
             try {
                 await signInAnonymously(auth);
                 await seedStudents();
                 initFirebaseSync();
                 populateSelects();
-                // Crear estrellas
+                // Crear estrellas de fondo
                 const starsContainer = document.getElementById('starsContainer');
                 for (let i = 0; i < 150; i++) {
                     const star = document.createElement('div');
@@ -962,8 +1039,8 @@
             } catch (error) { console.error(error); showToast("Error de conexión", "error"); }
         }
 
-        // Registrar eventos del DOM
         document.addEventListener('DOMContentLoaded', () => {
+            // Botones principales de acceso
             document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
             document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
             document.getElementById('loginTeacher').onclick = () => {
@@ -1155,7 +1232,7 @@
                 document.getElementById('examTitle').value = ''; document.getElementById('examTopic').value = ''; document.getElementById('questionsEditor').innerHTML = ''; document.getElementById('numQuestions').value = '5';
             };
 
-            // Añadir estudiante
+            // Agregar estudiante
             document.getElementById('addStudent').onclick = async () => {
                 const name = document.getElementById('newStudentName').value.trim().toUpperCase();
                 const grade = document.getElementById('newStudentGrade').value;
@@ -1224,19 +1301,27 @@
             const importModal = document.getElementById('importQuestionsModal');
             const openImportBtn = document.getElementById('importQuestionsBtn');
             const closeImportBtn = document.getElementById('closeImportModal');
-            const processImportBtn = document.getElementById('processImportBtn');
+            const simpleImportBtn = document.getElementById('processImportSimpleBtn');
+            const aiImportBtn = document.getElementById('processImportWithAIBtn');
             openImportBtn.onclick = () => importModal.classList.remove('hidden');
             closeImportBtn.onclick = () => importModal.classList.add('hidden');
-            processImportBtn.onclick = () => {
+            simpleImportBtn.onclick = () => {
                 const text = document.getElementById('importTextArea').value;
                 if (!text.trim()) return showToast("Pega el texto", "error");
-                if (parseAndImportQuestions(text)) {
+                if (importQuestionsSimple(text)) {
                     importModal.classList.add('hidden');
                     document.getElementById('importTextArea').value = '';
                 }
             };
+            aiImportBtn.onclick = async () => {
+                const text = document.getElementById('importTextArea').value;
+                if (!text.trim()) return showToast("Pega el texto", "error");
+                await importQuestionsWithAI(text);
+                importModal.classList.add('hidden');
+                document.getElementById('importTextArea').value = '';
+            };
 
-            // Filtros
+            // Filtros y refrescos
             document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
             document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
             document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
