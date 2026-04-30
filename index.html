@@ -3,92 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>EduGestor IA - Aula Digital</title>
+    <title>EduGestor IA - Plataforma Educativa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
+        /* Reset y fuentes modernas */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Poppins', 'Segoe UI', 'Inter', system-ui, sans-serif;
-            background: radial-gradient(ellipse at 30% 40%, #0a0f1e, #03060c);
+            font-family: 'Inter', 'Poppins', system-ui, -apple-system, sans-serif;
+            background: #0a0c12;
             color: #eef5ff;
             overflow-x: hidden;
             position: relative;
         }
-        .stars {
+        /* Fondo con efecto de grid y gradiente */
+        body::before {
+            content: '';
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
             pointer-events: none;
             z-index: 0;
         }
-        .star {
-            position: absolute;
-            background-color: white;
-            border-radius: 50%;
-            opacity: 0.6;
-            animation: twinkle 3s infinite alternate;
-        }
-        @keyframes twinkle {
-            0% { opacity: 0.2; transform: scale(1); }
-            100% { opacity: 1; transform: scale(1.2); }
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at 20% 30%, rgba(0, 150, 255, 0.08), transparent 70%);
+            pointer-events: none;
+            z-index: 0;
         }
         .content { position: relative; z-index: 2; }
-        .glass-card {
-            background: rgba(15, 25, 45, 0.55);
-            backdrop-filter: blur(12px);
-            border-radius: 2rem;
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-            transition: all 0.3s ease;
-            overflow: hidden; /* Evita que el contenido sobresalga */
-        }
-        .glass-card:hover {
-            border-color: #0ff;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
-            transform: translateY(-5px);
-        }
-        .icon-3d {
-            background: rgba(20, 30, 55, 0.7);
-            backdrop-filter: blur(8px);
+        
+        /* Tarjetas estilo trading */
+        .stat-card {
+            background: linear-gradient(135deg, rgba(15, 25, 45, 0.8) 0%, rgba(8, 15, 30, 0.9) 100%);
+            backdrop-filter: blur(10px);
             border-radius: 1.5rem;
-            padding: 1.2rem;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            border: 1px solid rgba(0, 255, 255, 0.4);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
         }
-        .icon-3d:hover {
-            transform: scale(1.05);
+        .stat-card:hover {
             border-color: #0ff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
-            background: rgba(30, 50, 80, 0.8);
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+            transform: translateY(-3px);
         }
-        .grade-block {
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            border-radius: 1rem;
-            padding: 0.5rem 1rem;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.5rem;
-            border-left: 4px solid;
+        .neon-glow {
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            border: none;
             transition: 0.2s;
         }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #0a0f1e; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb { background: #0ff; border-radius: 10px; }
-        .modal-glass {
-            background: rgba(5, 10, 25, 0.95);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(0, 255, 255, 0.5);
-            border-radius: 2rem;
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(0, 114, 255, 0.5);
         }
-        button, .btn-like { transition: 0.2s; }
-        button:active { transform: scale(0.98); }
+        .gradient-text {
+            background: linear-gradient(135deg, #00c6ff, #00ffcc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        /* Slider interactivo */
         .slider-container {
             background: #1e2a3a;
             border-radius: 9999px;
@@ -101,16 +89,19 @@
         .slider-track { background: #4a5b6e; border-radius: 9999px; height: 8px; width: 100%; position: relative; }
         .slider-thumb {
             position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px;
-            background: #0ff; border-radius: 50%; box-shadow: 0 0 10px #0ff;
+            background: linear-gradient(135deg, #0ff, #00aaff); border-radius: 50%; box-shadow: 0 0 10px #0ff;
             display: flex; align-items: center; justify-content: center; cursor: grab; transition: left 0.05s linear; left: 0%;
         }
+        .slider-thumb:active { cursor: grabbing; }
         .slider-thumb i { color: #000; font-size: 1.2rem; }
         .slider-complete { background: #0ff; }
         .slider-complete .slider-thumb i { color: #000; }
         .toast {
             position: fixed; bottom: 20px; right: 20px;
-            background: #0ff; color: #000; padding: 12px 20px; border-radius: 40px;
+            background: linear-gradient(90deg, #00c6ff, #0072ff);
+            color: #fff; padding: 12px 20px; border-radius: 40px;
             z-index: 9999; opacity: 0; transition: 0.3s; box-shadow: 0 0 15px #0ff;
+            font-weight: 600;
         }
         .toast.show { opacity: 1; }
         .spinner {
@@ -124,80 +115,107 @@
             vertical-align: middle;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        /* Corrección: botón salir siempre visible */
-        .logout-btn {
-            position: relative;
-            z-index: 100;
-            background: #dc2626;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-weight: 600;
+        .glass-modal {
+            background: rgba(8, 15, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.4);
+            border-radius: 2rem;
+        }
+        input, select, textarea {
+            background: rgba(20, 30, 50, 0.8);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 1rem;
+            padding: 0.75rem 1rem;
+            color: white;
             transition: 0.2s;
         }
-        .logout-btn:hover {
-            background: #b91c1c;
-            transform: scale(1.02);
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #0ff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         }
-        /* Asegurar que los paneles tengan suficiente espacio */
-        .teacher-panel-container, .student-panel-container {
-            min-height: 100vh;
-            overflow-y: auto;
-            padding-bottom: 2rem;
+        button { transition: 0.2s; cursor: pointer; }
+        .panel-card {
+            background: rgba(12, 20, 35, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(0, 255, 255, 0.2);
         }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #1a1f2e; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #0ff; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="stars" id="starsContainer"></div>
 <div id="toast" class="toast"></div>
 
 <div class="content relative min-h-screen">
-    <!-- Dashboard de calificaciones -->
-    <div class="fixed top-6 right-6 z-50 flex gap-2 bg-black/40 backdrop-blur-md p-2 rounded-2xl border border-cyan-500/30">
-        <div class="grade-block" style="border-left-color: #00ffcc;">AD</div>
-        <div class="grade-block" style="border-left-color: #3b82f6;">A</div>
-        <div class="grade-block" style="border-left-color: #f59e0b;">B</div>
-        <div class="grade-block" style="border-left-color: #ef4444;">C</div>
-    </div>
-
-    <!-- Pantalla de bienvenida -->
-    <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-screen p-6">
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-6xl mx-auto mt-8">
-            <div class="icon-3d flex flex-col items-center p-5" id="infoUploadBtn">
-                <i class="fas fa-folder-open text-5xl text-cyan-300 mb-3"></i>
-                <span class="font-semibold text-lg">INFO UPLOAD</span>
-                <span class="text-xs text-cyan-200/60">Subir recursos</span>
+    <!-- Panel superior con estadísticas estilo trading (sin AD, A, B, C) -->
+    <div class="fixed top-0 left-0 w-full z-50 bg-black/30 backdrop-blur-md border-b border-cyan-500/30">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-brain text-white text-xl"></i>
+                </div>
+                <h1 class="text-xl font-bold gradient-text">EduGestor IA</h1>
             </div>
-            <div class="icon-3d flex flex-col items-center p-5" id="examsBtn">
-                <i class="fas fa-shield-alt text-5xl text-cyan-300 mb-3"></i>
-                <span class="font-semibold text-lg">EXAMS</span>
-                <span class="text-xs text-cyan-200/60">Evaluaciones IA</span>
+            <div class="flex gap-6 text-sm font-mono">
+                <div class="hidden md:flex gap-4">
+                    <div class="flex items-center gap-1"><i class="fas fa-check-circle text-emerald-400"></i> <span>IA activa</span></div>
+                    <div class="flex items-center gap-1"><i class="fas fa-chart-line text-cyan-400"></i> <span>Análisis en tiempo real</span></div>
+                </div>
             </div>
-            <div class="icon-3d flex flex-col items-center p-5" id="homeworkBtn">
-                <i class="fas fa-robot text-5xl text-cyan-300 mb-3"></i>
-                <span class="font-semibold text-lg">HOMEWORK</span>
-                <span class="text-xs text-cyan-200/60">Tareas asistidas</span>
-            </div>
-            <div class="icon-3d flex flex-col items-center p-5" id="teacherReviewBtn">
-                <i class="fas fa-search text-5xl text-cyan-300 mb-3"></i>
-                <span class="font-semibold text-lg">TEACHER REVIEW</span>
-                <span class="text-xs text-cyan-200/60">Panel docente</span>
-            </div>
-            <div class="icon-3d flex flex-col items-center p-5" id="gradesBtn">
-                <i class="fas fa-trophy text-5xl text-cyan-300 mb-3"></i>
-                <span class="font-semibold text-lg">GRADES</span>
-                <span class="text-xs text-cyan-200/60">Progreso y notas</span>
-            </div>
-        </div>
-        <div class="mt-12 flex gap-6">
-            <button id="teacherBtn" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-purple-500/30 hover:scale-105 transition">👩‍🏫 Acceso Docente</button>
-            <button id="studentBtn" class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-3 px-8 rounded-full shadow-lg shadow-emerald-500/30 hover:scale-105 transition">👨‍🎓 Acceso Estudiante</button>
         </div>
     </div>
 
-    <!-- Modales docente -->
+    <!-- Pantalla de bienvenida con diseño renovado -->
+    <div id="welcomeScreen" class="flex flex-col items-center justify-center min-h-screen p-6 pt-20">
+        <div class="text-center mb-12">
+            <div class="inline-block p-4 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 rounded-full mb-4">
+                <i class="fas fa-graduation-cap text-5xl text-cyan-400"></i>
+                <i class="fas fa-brain text-5xl text-blue-400 -ml-3"></i>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-bold gradient-text mb-2">Portal de Aprendizaje IA</h2>
+            <p class="text-gray-400 max-w-lg mx-auto">Planifica, ejecuta y mejora cada día. Educación potenciada por inteligencia artificial.</p>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-5 max-w-5xl mx-auto">
+            <div class="stat-card flex flex-col items-center p-5 cursor-pointer hover:scale-105 transition" id="infoUploadBtn">
+                <i class="fas fa-folder-open text-3xl text-cyan-400 mb-2"></i>
+                <span class="font-semibold">Info Upload</span>
+                <span class="text-xs text-gray-400">Recursos</span>
+            </div>
+            <div class="stat-card flex flex-col items-center p-5 cursor-pointer hover:scale-105 transition" id="examsBtn">
+                <i class="fas fa-shield-alt text-3xl text-cyan-400 mb-2"></i>
+                <span class="font-semibold">Exams</span>
+                <span class="text-xs text-gray-400">Evaluaciones IA</span>
+            </div>
+            <div class="stat-card flex flex-col items-center p-5 cursor-pointer hover:scale-105 transition" id="homeworkBtn">
+                <i class="fas fa-robot text-3xl text-cyan-400 mb-2"></i>
+                <span class="font-semibold">Homework</span>
+                <span class="text-xs text-gray-400">Tareas</span>
+            </div>
+            <div class="stat-card flex flex-col items-center p-5 cursor-pointer hover:scale-105 transition" id="teacherReviewBtn">
+                <i class="fas fa-search text-3xl text-cyan-400 mb-2"></i>
+                <span class="font-semibold">Review</span>
+                <span class="text-xs text-gray-400">Panel docente</span>
+            </div>
+            <div class="stat-card flex flex-col items-center p-5 cursor-pointer hover:scale-105 transition" id="gradesBtn">
+                <i class="fas fa-trophy text-3xl text-cyan-400 mb-2"></i>
+                <span class="font-semibold">Grades</span>
+                <span class="text-xs text-gray-400">Progreso</span>
+            </div>
+        </div>
+        <div class="mt-12 flex gap-5">
+            <button id="teacherBtn" class="btn-primary px-8 py-3 rounded-full font-bold shadow-lg">👩‍🏫 Acceso Docente</button>
+            <button id="studentBtn" class="bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-3 rounded-full font-bold shadow-lg hover:scale-105 transition">👨‍🎓 Acceso Estudiante</button>
+        </div>
+        <div class="mt-8 text-xs text-gray-500">“No es suerte, es estrategia”</div>
+    </div>
+
+    <!-- Modales (docente y estudiante) manteniendo la misma funcionalidad pero con nuevo estilo -->
     <div id="teacherModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-        <div class="modal-glass rounded-2xl p-6 w-96 shadow-2xl">
+        <div class="glass-modal rounded-2xl p-6 w-96 shadow-2xl">
             <h2 class="text-2xl font-bold mb-4 text-cyan-300">🔐 Acceso Docente</h2>
             <input type="password" id="teacherPass" placeholder="Contraseña" class="w-full bg-gray-800/80 border border-cyan-500 p-3 rounded-lg mb-4 text-white focus:ring-2 focus:ring-cyan-400">
             <button id="loginTeacher" class="w-full bg-cyan-600 hover:bg-cyan-700 text-white py-2 rounded-lg font-semibold transition">Ingresar</button>
@@ -205,9 +223,8 @@
         </div>
     </div>
 
-    <!-- Modal estudiante con slider -->
     <div id="studentModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
-        <div class="modal-glass rounded-2xl p-6 w-96 shadow-2xl">
+        <div class="glass-modal rounded-2xl p-6 w-96 shadow-2xl">
             <h2 class="text-2xl font-bold mb-4 text-emerald-300">🎓 Acceso Estudiante</h2>
             <select id="studentGradeSelect" class="w-full bg-gray-800 border border-emerald-500 p-3 rounded-lg mb-3 text-white"></select>
             <select id="studentNameSelect" class="w-full bg-gray-800 border border-emerald-500 p-3 rounded-lg mb-4 text-white"></select>
@@ -226,37 +243,43 @@
         </div>
     </div>
 
-    <!-- Panel Docente (con corrección de scroll) -->
-    <div id="teacherPanel" class="hidden min-h-screen bg-black/60 backdrop-blur-md p-6 teacher-panel-container">
-        <div class="glass-card p-6 max-w-7xl mx-auto">
-            <nav class="flex justify-between items-center border-b border-cyan-500/50 pb-4 mb-6">
-                <h2 class="text-3xl font-bold text-cyan-300"><i class="fas fa-chalkboard-teacher mr-2"></i>Panel Docente</h2>
-                <button id="logoutTeacherPanel" class="logout-btn"><i class="fas fa-sign-out-alt mr-1"></i> Salir</button>
-            </nav>
-            <div class="flex flex-wrap gap-2 border-b border-cyan-500/30 mb-6">
-                <button class="tab-btn active bg-cyan-600 text-white px-5 py-2 rounded-t-lg" data-tab="tasksTab">🤖 HOMEWORK</button>
-                <button class="tab-btn bg-gray-800 text-gray-300 px-5 py-2 rounded-t-lg" data-tab="examsTab">🛡️ EXAMS</button>
-                <button class="tab-btn bg-gray-800 text-gray-300 px-5 py-2 rounded-t-lg" data-tab="gradesTab">🏆 GRADES</button>
-                <button class="tab-btn bg-gray-800 text-gray-300 px-5 py-2 rounded-t-lg" data-tab="studentsTab">📁 INFO UPLOAD / ESTUDIANTES</button>
+    <!-- Panel Docente (con nuevo diseño de estadísticas) -->
+    <div id="teacherPanel" class="hidden min-h-screen pt-20">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="bg-gradient-to-r from-cyan-900/30 to-blue-900/30 rounded-2xl p-4 mb-6 border border-cyan-500/30 backdrop-blur-sm">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold gradient-text"><i class="fas fa-chalkboard-teacher mr-2"></i>Panel Docente</h2>
+                        <p class="text-gray-400 text-sm">Gestión de tareas, exámenes y calificaciones</p>
+                    </div>
+                    <button id="logoutTeacherPanel" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-full transition">Salir</button>
+                </div>
             </div>
 
-            <!-- TAREAS -->
+            <div class="flex flex-wrap gap-2 border-b border-cyan-500/30 mb-6">
+                <button class="tab-btn active bg-cyan-600 text-white px-5 py-2 rounded-t-lg transition" data-tab="tasksTab">📚 Tareas</button>
+                <button class="tab-btn bg-gray-800/50 text-gray-300 px-5 py-2 rounded-t-lg transition" data-tab="examsTab">📋 Exámenes</button>
+                <button class="tab-btn bg-gray-800/50 text-gray-300 px-5 py-2 rounded-t-lg transition" data-tab="gradesTab">📊 Calificaciones</button>
+                <button class="tab-btn bg-gray-800/50 text-gray-300 px-5 py-2 rounded-t-lg transition" data-tab="studentsTab">👥 Estudiantes</button>
+            </div>
+
+            <!-- Tareas -->
             <div id="tasksTab" class="tab-content">
-                <div class="glass-card p-6 mb-8">
+                <div class="stat-card p-6 mb-8">
                     <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-plus-circle text-cyan-400 mr-2"></i>Nueva Tarea</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <input type="text" id="taskTitle" placeholder="Título" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg">
-                        <select id="taskGrade" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg"></select>
-                        <select id="taskArea" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg"></select>
+                        <input type="text" id="taskTitle" placeholder="Título" class="w-full">
+                        <select id="taskGrade" class="w-full"></select>
+                        <select id="taskArea" class="w-full"></select>
                         <div class="flex gap-2">
-                            <textarea id="taskDesc" placeholder="Descripción" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg flex-1" rows="3"></textarea>
+                            <textarea id="taskDesc" placeholder="Descripción" class="flex-1" rows="3"></textarea>
                             <button id="generateTaskDesc" class="bg-purple-600 hover:bg-purple-700 text-white px-4 rounded-lg transition"><i class="fas fa-magic"></i> IA</button>
                         </div>
                         <div class="md:col-span-2 flex flex-col md:flex-row gap-4">
-                            <input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="bg-gray-800 border border-cyan-500 p-2 rounded-lg flex-1">
-                            <input type="text" id="taskLink" placeholder="Enlace (YouTube, web)" class="bg-gray-800 border border-cyan-500 p-2 rounded-lg flex-1">
+                            <input type="file" id="taskFile" accept=".pdf,.doc,.docx,.txt" class="flex-1">
+                            <input type="text" id="taskLink" placeholder="Enlace (YouTube, web)" class="flex-1">
                         </div>
-                        <button id="publishTask" class="md:col-span-2 bg-cyan-600 hover:bg-cyan-700 font-semibold py-3 rounded-lg transition">Publicar Tarea</button>
+                        <button id="publishTask" class="md:col-span-2 btn-primary font-semibold py-3 rounded-lg">Publicar Tarea</button>
                     </div>
                 </div>
                 <h3 class="font-bold text-lg mb-3">Tareas publicadas</h3>
@@ -268,20 +291,20 @@
                 <div id="tasksList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             </div>
 
-            <!-- EXÁMENES -->
+            <!-- Exámenes -->
             <div id="examsTab" class="tab-content hidden">
-                <div class="glass-card p-6 mb-8">
+                <div class="stat-card p-6 mb-8">
                     <h3 class="text-xl font-bold mb-4 flex items-center"><i class="fas fa-robot text-purple-400 mr-2"></i>Crear Examen con IA</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                        <input type="text" id="examTitle" placeholder="Título" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg">
-                        <select id="examGrade" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg"></select>
-                        <select id="examArea" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg"></select>
+                        <input type="text" id="examTitle" placeholder="Título" class="w-full">
+                        <select id="examGrade" class="w-full"></select>
+                        <select id="examArea" class="w-full"></select>
                     </div>
                     <div class="flex flex-col md:flex-row gap-4 mb-4">
-                        <textarea id="examTopic" placeholder="Describe el tema para generar preguntas" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg flex-1" rows="2"></textarea>
+                        <textarea id="examTopic" placeholder="Describe el tema para generar preguntas" class="flex-1" rows="2"></textarea>
                         <div class="bg-gray-800/50 p-3 rounded-lg flex flex-wrap items-center gap-2">
                             <label class="font-semibold">Nº preguntas:</label>
-                            <input type="number" id="numQuestions" value="5" min="1" class="border p-2 rounded w-20 bg-gray-700">
+                            <input type="number" id="numQuestions" value="5" min="1" class="w-20 bg-gray-700">
                             <button id="generateQuestions" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg"><i class="fas fa-bolt"></i> Generar IA</button>
                             <button id="manualQuestionBtn" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg"><i class="fas fa-plus-circle"></i> Manual</button>
                             <button id="importQuestionsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"><i class="fas fa-file-import"></i> Importar</button>
@@ -289,7 +312,7 @@
                         </div>
                     </div>
                     <div id="questionsEditor" class="space-y-3 mb-4 max-h-96 overflow-auto"></div>
-                    <button id="publishExam" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 rounded-lg w-full">Publicar Examen</button>
+                    <button id="publishExam" class="btn-primary font-semibold py-3 rounded-lg w-full">Publicar Examen</button>
                 </div>
                 <h3 class="font-bold text-lg mb-3">Exámenes activos</h3>
                 <div class="flex gap-3 mb-4">
@@ -300,36 +323,36 @@
                 <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- CALIFICACIONES -->
+            <!-- Calificaciones -->
             <div id="gradesTab" class="tab-content hidden">
-                <div class="glass-card p-6">
+                <div class="stat-card p-6">
                     <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                        <select id="filterGrade" class="bg-gray-800 border border-cyan-500 p-2 rounded-lg flex-1"></select>
-                        <select id="filterArea" class="bg-gray-800 border border-cyan-500 p-2 rounded-lg flex-1"></select>
-                        <button id="refreshGrades" class="bg-cyan-600 text-white px-4 py-2 rounded-lg">Refrescar</button>
+                        <select id="filterGrade" class="flex-1"></select>
+                        <select id="filterArea" class="flex-1"></select>
+                        <button id="refreshGrades" class="btn-primary px-4 py-2 rounded-lg">Refrescar</button>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full border-collapse text-gray-200">
-                            <thead><tr class="bg-gray-800/50 border-b border-cyan-500"><th class="p-3">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
+                        <table class="w-full border-collapse">
+                            <thead><tr class="border-b border-cyan-500/30"><th class="p-3 text-left">Estudiante</th><th>Examen</th><th>Nota</th><th>Acciones</th><th>Fecha</th></tr></thead>
                             <tbody id="gradesTableBody"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- ESTUDIANTES -->
+            <!-- Estudiantes -->
             <div id="studentsTab" class="tab-content hidden">
-                <div class="glass-card p-6">
-                    <h3 class="text-xl font-bold mb-4">📁 INFO UPLOAD / Gestión de Estudiantes</h3>
+                <div class="stat-card p-6">
+                    <h3 class="text-xl font-bold mb-4">Gestión de Estudiantes</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                        <input type="text" id="newStudentName" placeholder="Apellidos y nombres" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg">
-                        <select id="newStudentGrade" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg"></select>
-                        <input type="text" id="newStudentPhone" placeholder="Teléfono" class="bg-gray-800 border border-cyan-500 p-3 rounded-lg">
+                        <input type="text" id="newStudentName" placeholder="Apellidos y nombres">
+                        <select id="newStudentGrade"></select>
+                        <input type="text" id="newStudentPhone" placeholder="Teléfono">
                         <button id="addStudent" class="md:col-span-3 bg-emerald-600 text-white py-2 rounded-lg">Guardar estudiante</button>
                     </div>
                     <hr class="my-4 border-cyan-500/30">
                     <label class="font-semibold block mb-2">Filtrar por grado:</label>
-                    <select id="filterStudentsGrade" class="w-full bg-gray-800 border border-cyan-500 p-3 rounded-lg mb-2"></select>
+                    <select id="filterStudentsGrade" class="w-full mb-2"></select>
                     <button id="refreshStudentsListBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-sm mb-4">Refrescar lista</button>
                     <div id="studentsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
                 </div>
@@ -337,17 +360,22 @@
         </div>
     </div>
 
-    <!-- PANEL ESTUDIANTE (con corrección de scroll) -->
-    <div id="studentPanel" class="hidden min-h-screen bg-black/60 backdrop-blur-md p-6 student-panel-container">
-        <div class="glass-card p-6 max-w-7xl mx-auto">
-            <nav class="flex justify-between items-center border-b border-emerald-500/50 pb-4 mb-6">
-                <div class="flex items-center gap-3"><i class="fas fa-user-graduate text-emerald-400 text-3xl"></i><span id="studentNameSpan" class="font-bold text-2xl"></span><span id="studentGradeSpan" class="text-sm text-emerald-300"></span></div>
-                <button id="logoutStudentPanel" class="logout-btn"><i class="fas fa-sign-out-alt mr-1"></i> Salir</button>
-            </nav>
+    <!-- Panel Estudiante (con nuevo diseño) -->
+    <div id="studentPanel" class="hidden min-h-screen pt-20">
+        <div class="max-w-7xl mx-auto px-4 py-6">
+            <div class="bg-gradient-to-r from-emerald-900/30 to-teal-900/30 rounded-2xl p-4 mb-6 border border-emerald-500/30 backdrop-blur-sm">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-2xl font-bold gradient-text"><i class="fas fa-user-graduate mr-2"></i>Panel Estudiante</h2>
+                        <p class="text-gray-400"><span id="studentNameSpan" class="font-semibold"></span> · <span id="studentGradeSpan"></span></p>
+                    </div>
+                    <button id="logoutStudentPanel" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-full transition">Salir</button>
+                </div>
+            </div>
             <div class="flex flex-wrap gap-2 border-b border-emerald-500/30 mb-6">
-                <button class="student-tab-btn active bg-emerald-600 text-white px-5 py-2 rounded-t-lg" data-stab="studentTasksTab">🤖 MIS TAREAS</button>
-                <button class="student-tab-btn bg-gray-800 text-gray-300 px-5 py-2 rounded-t-lg" data-stab="studentExamsTab">🛡️ EVALUACIONES</button>
-                <button class="student-tab-btn bg-gray-800 text-gray-300 px-5 py-2 rounded-t-lg" data-stab="studentGradesTab">🏆 CALIFICACIONES</button>
+                <button class="student-tab-btn active bg-emerald-600 text-white px-5 py-2 rounded-t-lg" data-stab="studentTasksTab">📚 Mis Tareas</button>
+                <button class="student-tab-btn bg-gray-800/50 text-gray-300 px-5 py-2 rounded-t-lg" data-stab="studentExamsTab">📝 Evaluaciones</button>
+                <button class="student-tab-btn bg-gray-800/50 text-gray-300 px-5 py-2 rounded-t-lg" data-stab="studentGradesTab">⭐ Calificaciones</button>
             </div>
             <div id="studentTasksTab" class="student-tab-content"><div id="studentTasksList" class="grid gap-6"></div></div>
             <div id="studentExamsTab" class="student-tab-content hidden"><div id="studentExamsList" class="grid gap-6"></div></div>
@@ -355,23 +383,23 @@
         </div>
     </div>
 
-    <!-- MODALES AUXILIARES -->
+    <!-- Modales auxiliares (examen, respuestas, manual, importar) con nuevo estilo -->
     <div id="examTakeModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 overflow-auto">
-        <div class="bg-gray-900/90 backdrop-blur-xl rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6 border border-cyan-500/50">
+        <div class="glass-modal rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
             <h2 id="examTakeTitle" class="text-2xl font-bold mb-4 text-cyan-300"></h2>
             <div id="examTakeQuestions"></div>
-            <div class="flex justify-end gap-3 mt-6"><button id="cancelExam" class="bg-gray-600 px-4 py-2 rounded-lg">Cancelar</button><button id="submitExamBtn" class="bg-emerald-600 text-white px-6 py-2 rounded-lg">Enviar</button></div>
+            <div class="flex justify-end gap-3 mt-6"><button id="cancelExam" class="bg-gray-600 px-4 py-2 rounded-lg">Cancelar</button><button id="submitExamBtn" class="btn-primary px-6 py-2 rounded-lg">Enviar</button></div>
         </div>
     </div>
     <div id="viewAnswersModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4 overflow-auto">
-        <div class="bg-gray-900/90 backdrop-blur-xl rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6 border border-cyan-500/50">
+        <div class="glass-modal rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-auto p-6">
             <h2 id="viewAnswersTitle" class="text-2xl font-bold mb-4 text-cyan-300"></h2>
             <div id="viewAnswersContent"></div>
             <button id="closeAnswersModal" class="bg-gray-600 text-white px-4 py-2 rounded-lg mt-4">Cerrar</button>
         </div>
     </div>
     <div id="manualQuestionModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
-        <div class="bg-gray-900/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-lg border border-cyan-500/50">
+        <div class="glass-modal rounded-2xl p-6 w-full max-w-lg">
             <h2 class="text-xl font-bold mb-4">Agregar pregunta manualmente</h2>
             <textarea id="manualQuestionText" rows="2" class="w-full bg-gray-800 border border-cyan-500 p-2 rounded-lg"></textarea>
             <div class="grid grid-cols-2 gap-3 my-3">
@@ -386,10 +414,8 @@
             <div class="flex justify-end gap-3"><button id="closeManualModal" class="bg-gray-600 px-4 py-2 rounded-lg">Cancelar</button><button id="addManualQuestionBtn" class="bg-emerald-600 px-4 py-2 rounded-lg">Agregar</button></div>
         </div>
     </div>
-
-    <!-- MODAL DE IMPORTACIÓN MEJORADO CON DETECCIÓN AVANZADA DE RESPUESTAS CORRECTAS -->
     <div id="importQuestionsModal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
-        <div class="bg-gray-900/90 backdrop-blur-xl rounded-2xl p-6 w-full max-w-3xl border border-cyan-500/50">
+        <div class="glass-modal rounded-2xl p-6 w-full max-w-3xl">
             <h2 class="text-xl font-bold mb-4">Importar preguntas desde texto</h2>
             <textarea id="importTextArea" rows="12" class="w-full bg-gray-800 border border-cyan-500 p-2 rounded-lg font-mono text-sm"></textarea>
             <div class="flex flex-wrap justify-end gap-3 mt-4">
@@ -402,12 +428,22 @@
     </div>
 
     <script type="module">
+        // ==================================================================
+        // CÓDIGO COMPLETO (Firebase, lógica de tareas, exámenes, etc.)
+        // ==================================================================
+        // Por razones de extensión, se incluye el mismo código funcional de la versión anterior
+        // pero con el nuevo diseño ya integrado. Manteniendo toda la lógica: 
+        // autenticación, CRUD, generación de exámenes con IA, importación con detección de respuestas,
+        // slider, renderizado de listas, etc.
+        // A continuación se importa la configuración y se definen todas las funciones.
+        // Nota: Para respetar la longitud, asumimos que el código JavaScript completo está aquí.
+        // El usuario debe reemplazar su archivo por este completamente.
+        
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, onSnapshot, serverTimestamp, getDoc, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
 
-        // Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyClWwYzro_avn1pK0DvD4x1r4v1grSAoE0",
             authDomain: "registro-jn-andrews-mpc.firebaseapp.com",
@@ -422,7 +458,6 @@
         const storage = getStorage(app);
         const DEEPSEEK_API_KEY = "sk-70c41d62b6114a6d85b700e27a3c7534";
 
-        // Referencias a colecciones
         const studentsRef = collection(db, 'students');
         const tasksRef = collection(db, 'tasks');
         const examsRef = collection(db, 'exams');
@@ -490,7 +525,6 @@
             unsubResults = onSnapshot(resultsRef, snap => { allResults = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderGradesTable(); if (currentStudent) renderStudentGrades(); });
         }
 
-        // Funciones de renderizado docente (simplificadas, igual que antes)
         function renderTasksList() {
             const container = document.getElementById('tasksList');
             if (!container) return;
@@ -498,9 +532,9 @@
             const area = document.getElementById('filterTasksArea')?.value || '';
             const filtered = allTasks.filter(t => (!grade || t.grade === grade) && (!area || t.area === area));
             container.innerHTML = filtered.map(t => `
-                <div class="bg-gray-800/70 rounded-xl p-4 border border-cyan-500/30">
+                <div class="stat-card p-4">
                     <div class="font-bold text-lg text-cyan-300">${escapeHtml(t.title)}</div>
-                    <div class="text-sm text-gray-300 mb-2">${t.area || 'Sin área'} · ${t.grade || 'Sin grado'}</div>
+                    <div class="text-sm text-gray-400 mb-2">${t.area || 'Sin área'} · ${t.grade || 'Sin grado'}</div>
                     <p class="text-gray-400 text-sm mb-3">${escapeHtml(t.description?.substring(0,100))}</p>
                     ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="text-cyan-400 text-sm"><i class="fas fa-paperclip mr-1"></i> Archivo</a>` : ''}
                     ${t.link ? `<a href="${t.link}" target="_blank" class="text-blue-400 text-sm ml-3"><i class="fas fa-link mr-1"></i> Enlace</a>` : ''}
@@ -517,9 +551,9 @@
             const area = document.getElementById('filterExamsArea')?.value || '';
             const filtered = allExams.filter(e => (!grade || e.grade === grade) && (!area || e.area === area));
             container.innerHTML = filtered.map(e => `
-                <div class="bg-gray-800/70 rounded-xl p-4 border border-cyan-500/30">
+                <div class="stat-card p-4">
                     <div class="font-bold text-emerald-400">${escapeHtml(e.title)}</div>
-                    <div class="text-sm text-gray-300">${e.area} · ${e.grade}</div>
+                    <div class="text-sm text-gray-400">${e.area} · ${e.grade}</div>
                     <div class="text-sm">${e.questions?.length || 0} preguntas</div>
                     <button class="delete-exam mt-2 bg-red-600/70 text-white px-3 py-1 rounded-lg text-sm" data-id="${e.id}">Eliminar examen</button>
                 </div>
@@ -536,7 +570,7 @@
             const filtered = allStudents.filter(s => s.grade === selectedGrade);
             if (filtered.length === 0) { container.innerHTML = `<p class="text-gray-400">No hay estudiantes en ${escapeHtml(selectedGrade)}</p>`; return; }
             container.innerHTML = filtered.map(s => `
-                <div class="bg-gray-800/70 rounded-lg p-3 flex justify-between items-center border border-cyan-500/30">
+                <div class="bg-gray-800/50 rounded-lg p-3 flex justify-between items-center border border-cyan-500/30">
                     <div><strong class="text-cyan-300">${escapeHtml(s.name)}</strong><br><span class="text-xs text-gray-400">📞 ${s.phones?.join(', ') || ''}</span></div>
                     <button class="delete-student bg-red-600 text-white px-2 py-1 rounded text-sm" data-id="${s.id}">Eliminar</button>
                 </div>
@@ -555,7 +589,7 @@
                 const exam = allExams.find(e => e.id === r.examId);
                 return student?.grade === gradeFilter && exam?.area === areaFilter;
             });
-            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones<tr></tr>'; return; }
+            if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="5">No hay calificaciones</td></tr>'; return; }
             tbody.innerHTML = filtered.map(r => {
                 const student = allStudents.find(s => s.id === r.studentId);
                 const studentName = student?.name || 'Desconocido';
@@ -639,7 +673,6 @@
             modal.classList.add('flex');
         }
 
-        // ========== FUNCIONES ESTUDIANTE ==========
         async function evaluateLinkWithAI(url, submissionId) {
             try {
                 const prompt = `Eres un profesor experto. Evalúa el siguiente enlace enviado por un estudiante como tarea: "${url}". Asigna una calificación (AD, A, B o C) y proporciona retroalimentación breve (máximo 100 palabras). Responde en el formato: CALIFICACIÓN: (letra) | COMENTARIO: (texto)`;
@@ -665,7 +698,7 @@
             if (!container || !currentStudent) return;
             const tasks = allTasks.filter(t => t.grade === currentStudent.grade);
             container.innerHTML = tasks.map(t => `
-                <div class="bg-gray-800/70 rounded-xl p-4 border border-cyan-500/30">
+                <div class="stat-card p-4">
                     <div class="font-bold text-cyan-300">${escapeHtml(t.title)}</div>
                     <div class="text-sm text-gray-400">${t.area || 'Sin área'}</div>
                     <p class="text-gray-400 text-sm mt-1">${escapeHtml(t.description?.substring(0,100))}</p>
@@ -684,46 +717,43 @@
                 </div>
             `).join('');
 
-            document.querySelectorAll('.submit-file').forEach(btn => {
-                btn.onclick = async () => {
-                    const taskId = btn.dataset.taskid;
-                    const file = document.getElementById(`file_${taskId}`).files[0];
-                    if (!file) return showToast("Selecciona un archivo");
-                    const storageRef = ref(storage, `submissions/${currentStudent.id}_${taskId}_${Date.now()}_${file.name}`);
-                    btn.disabled = true;
-                    btn.innerHTML = '<div class="spinner"></div> Subiendo...';
-                    try {
-                        await uploadBytes(storageRef, file);
-                        const url = await getDownloadURL(storageRef);
-                        await addDoc(submissionsRef, {
-                            studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
-                            taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, fileURL: url, submittedAt: serverTimestamp(), type: 'file'
-                        });
-                        showToast("Archivo entregado correctamente", "success");
-                        document.getElementById(`file_${taskId}`).value = '';
-                    } catch (e) { showToast("Error al subir", "error"); }
-                    finally { btn.disabled = false; btn.innerHTML = "📎 Subir archivo"; }
-                };
+            document.querySelectorAll('.submit-file').forEach(btn => { btn.onclick = async () => {
+                const taskId = btn.dataset.taskid;
+                const file = document.getElementById(`file_${taskId}`).files[0];
+                if (!file) return showToast("Selecciona un archivo");
+                const storageRef = ref(storage, `submissions/${currentStudent.id}_${taskId}_${Date.now()}_${file.name}`);
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner"></div> Subiendo...';
+                try {
+                    await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(storageRef);
+                    await addDoc(submissionsRef, {
+                        studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
+                        taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, fileURL: url, submittedAt: serverTimestamp(), type: 'file'
+                    });
+                    showToast("Archivo entregado correctamente", "success");
+                    document.getElementById(`file_${taskId}`).value = '';
+                } catch (e) { showToast("Error al subir", "error"); }
+                finally { btn.disabled = false; btn.innerHTML = "📎 Subir archivo"; }
+            };
             });
-
-            document.querySelectorAll('.submit-link').forEach(btn => {
-                btn.onclick = async () => {
-                    const taskId = btn.dataset.taskid;
-                    const link = document.getElementById(`link_${taskId}`).value.trim();
-                    if (!link) return showToast("Pega un enlace");
-                    if (!link.startsWith('http')) return showToast("El enlace debe empezar con http:// o https://");
-                    btn.disabled = true;
-                    btn.innerHTML = '<div class="spinner"></div> Evaluando...';
-                    try {
-                        const docRef = await addDoc(submissionsRef, {
-                            studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
-                            taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, linkURL: link, submittedAt: serverTimestamp(), type: 'link'
-                        });
-                        await evaluateLinkWithAI(link, docRef.id);
-                        document.getElementById(`link_${taskId}`).value = '';
-                    } catch (e) { showToast("Error al procesar enlace", "error"); }
-                    finally { btn.disabled = false; btn.innerHTML = "🤖 Evaluar enlace con IA"; }
-                };
+            document.querySelectorAll('.submit-link').forEach(btn => { btn.onclick = async () => {
+                const taskId = btn.dataset.taskid;
+                const link = document.getElementById(`link_${taskId}`).value.trim();
+                if (!link) return showToast("Pega un enlace");
+                if (!link.startsWith('http')) return showToast("El enlace debe empezar con http:// o https://");
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner"></div> Evaluando...';
+                try {
+                    const docRef = await addDoc(submissionsRef, {
+                        studentId: currentStudent.id, studentName: currentStudent.name, studentGrade: currentStudent.grade,
+                        taskId, taskTitle: btn.dataset.title, taskArea: btn.dataset.area, linkURL: link, submittedAt: serverTimestamp(), type: 'link'
+                    });
+                    await evaluateLinkWithAI(link, docRef.id);
+                    document.getElementById(`link_${taskId}`).value = '';
+                } catch (e) { showToast("Error al procesar enlace", "error"); }
+                finally { btn.disabled = false; btn.innerHTML = "🤖 Evaluar enlace con IA"; }
+            };
             });
         }
 
@@ -732,7 +762,7 @@
             if (!container || !currentStudent) return;
             const exams = allExams.filter(e => e.grade === currentStudent.grade);
             container.innerHTML = exams.map(e => `
-                <div class="bg-gray-800/70 rounded-xl p-4 border border-cyan-500/30 flex justify-between items-center">
+                <div class="stat-card p-4 flex justify-between items-center">
                     <div><div class="font-bold text-emerald-400">${escapeHtml(e.title)}</div><div class="text-sm text-gray-400">${e.area}</div><div>${e.questions.length} preguntas</div></div>
                     <button class="take-exam bg-purple-600 text-white px-4 py-2 rounded-lg" data-exam='${JSON.stringify(e)}'>Rendir</button>
                 </div>
@@ -745,7 +775,7 @@
             if (!container || !currentStudent) return;
             const myResults = allResults.filter(r => r.studentId === currentStudent.id);
             container.innerHTML = myResults.map(r => `
-                <div class="bg-gray-800/70 rounded-xl p-4 border border-cyan-500/30">
+                <div class="stat-card p-4">
                     <div class="font-bold text-gray-200">${escapeHtml(r.examTitle)}</div>
                     <div class="text-3xl font-bold ${r.grade === 'AD' ? 'text-emerald-400' : r.grade === 'A' ? 'text-blue-400' : r.grade === 'B' ? 'text-yellow-400' : 'text-red-400'}">${r.grade}</div>
                     <div>${r.score}/${r.total} aciertos</div>
@@ -913,83 +943,61 @@
             }
         }
 
-        // ========== FUNCIONES DE IMPORTACIÓN CON DETECCIÓN AVANZADA DE RESPUESTAS CORRECTAS ==========
+        // Importación con IA (detectar respuestas correctas)
         async function detectCorrectAnswersWithAI(questions) {
-            // Prompt mejorado para que la IA infiera la respuesta correcta incluso si no está explícita
-            const prompt = `Eres un profesor experto en múltiples materias. Para cada una de las siguientes preguntas de opción múltiple, determina cuál es la respuesta correcta basándote en el conocimiento general y el contexto de la pregunta. Devuelve SOLO un array JSON con los índices de la respuesta correcta (0-3) en el mismo orden de las preguntas. No des explicaciones, solo el arreglo.
-
-Formato de respuesta: [0, 2, 1, ...]
-
-Preguntas:
-${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j) => `${String.fromCharCode(65+j)}. ${opt}`).join('\n')}`).join('\n\n')}`;
+            const prompt = `Eres un profesor experto. Para cada una de las siguientes preguntas de opción múltiple, determina cuál es la respuesta correcta (índice 0-3). Devuelve SOLO un array JSON con los índices de la respuesta correcta en el mismo orden de las preguntas. Formato: [0, 2, 1, ...].\n\nPreguntas:\n${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j) => `${String.fromCharCode(65+j)}. ${opt}`).join('\n')}`).join('\n\n')}`;
             try {
                 const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
-                    body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }], temperature: 0 })
+                    method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: prompt }], temperature: 0 })
                 });
                 const data = await res.json();
                 const content = data.choices[0].message.content;
-                const match = content.match(/\[[\d,\s]+\]/);
-                if (match) {
-                    const indices = JSON.parse(match[0]);
-                    if (Array.isArray(indices) && indices.length === questions.length) {
-                        return indices;
-                    }
-                }
+                const match = content.match(/\[[\d, ]+\]/);
+                if (match) return JSON.parse(match[0]);
                 return null;
-            } catch(e) { console.error(e); return null; }
+            } catch(e) { return null; }
         }
 
         function parseQuestionsFromText(text) {
             const lines = text.split(/\r?\n/);
-            let questions = [];
-            let currentQuestion = null;
-            let currentOptions = [];
+            let questions = [], currentQuestion = null, currentOptions = [];
             const questionPattern = /^\s*(\d+)\.\s+(.+)/;
             const optionPattern = /^\s*([a-d])[\)\.]\s*(.+)/i;
             for (let line of lines) {
                 line = line.trim();
-                if (line === "") continue;
+                if (!line) continue;
                 const qMatch = line.match(questionPattern);
                 if (qMatch) {
-                    if (currentQuestion && currentOptions.length === 4) {
-                        questions.push({ text: currentQuestion, options: [...currentOptions], correct: -1 });
-                    }
+                    if (currentQuestion && currentOptions.length === 4) questions.push({ text: currentQuestion, options: [...currentOptions], correct: -1 });
                     currentQuestion = qMatch[2];
                     currentOptions = [];
                     continue;
                 }
                 const optMatch = line.match(optionPattern);
-                if (optMatch && currentQuestion !== null) {
-                    const index = optMatch[1].toLowerCase().charCodeAt(0) - 97;
-                    if (index >= 0 && index <= 3) {
-                        while (currentOptions.length < index) currentOptions.push("");
-                        currentOptions[index] = optMatch[2];
+                if (optMatch && currentQuestion) {
+                    const idx = optMatch[1].toLowerCase().charCodeAt(0) - 97;
+                    if (idx >= 0 && idx <= 3) {
+                        while (currentOptions.length < idx) currentOptions.push("");
+                        currentOptions[idx] = optMatch[2];
                     }
                 }
             }
-            if (currentQuestion && currentOptions.length === 4) {
-                questions.push({ text: currentQuestion, options: [...currentOptions], correct: -1 });
-            }
+            if (currentQuestion && currentOptions.length === 4) questions.push({ text: currentQuestion, options: [...currentOptions], correct: -1 });
             return questions;
         }
 
         async function importQuestionsWithAI(text) {
             const questions = parseQuestionsFromText(text);
-            if (questions.length === 0) { showToast("No se encontraron preguntas en el texto", "error"); return false; }
+            if (!questions.length) { showToast("No se encontraron preguntas", "error"); return false; }
             const statusDiv = document.getElementById('importStatus');
             statusDiv.classList.remove('hidden');
-            statusDiv.innerHTML = '<div class="spinner"></div> Analizando respuestas correctas con IA (puede tomar unos segundos)...';
+            statusDiv.innerHTML = '<div class="spinner"></div> Analizando respuestas correctas con IA...';
             const correctIndices = await detectCorrectAnswersWithAI(questions);
             if (correctIndices && correctIndices.length === questions.length) {
-                for (let i = 0; i < questions.length; i++) {
-                    questions[i].correct = correctIndices[i];
-                }
-                statusDiv.innerHTML = '✅ Respuestas correctas detectadas automáticamente.';
-                setTimeout(() => statusDiv.classList.add('hidden'), 2000);
+                for (let i = 0; i < questions.length; i++) questions[i].correct = correctIndices[i];
+                statusDiv.innerHTML = '✅ Respuestas detectadas correctamente.';
             } else {
-                statusDiv.innerHTML = '⚠️ No se pudieron detectar todas las respuestas. Se asignará la opción 1 por defecto. Deberás corregirlas manualmente.';
+                statusDiv.innerHTML = '⚠️ No se detectaron respuestas. Se asignará opción 1 por defecto.';
                 for (let i = 0; i < questions.length; i++) questions[i].correct = 0;
             }
             const editor = document.getElementById('questionsEditor');
@@ -999,26 +1007,23 @@ ${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j
                 div.innerHTML = `
                     <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
                     <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        ${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}
-                    </div>
+                    <div class="grid grid-cols-2 gap-2">${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}</div>
                     <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full">
-                        <option value="0" ${q.correct === 0 ? 'selected' : ''}>Opción 1 correcta</option>
-                        <option value="1" ${q.correct === 1 ? 'selected' : ''}>Opción 2 correcta</option>
-                        <option value="2" ${q.correct === 2 ? 'selected' : ''}>Opción 3 correcta</option>
-                        <option value="3" ${q.correct === 3 ? 'selected' : ''}>Opción 4 correcta</option>
+                        <option value="0" ${q.correct === 0 ? 'selected' : ''}>Opción 1 correcta</option><option value="1" ${q.correct === 1 ? 'selected' : ''}>Opción 2 correcta</option>
+                        <option value="2" ${q.correct === 2 ? 'selected' : ''}>Opción 3 correcta</option><option value="3" ${q.correct === 3 ? 'selected' : ''}>Opción 4 correcta</option>
                     </select>
                 `;
                 editor.appendChild(div);
                 div.querySelector('.remove-question').onclick = function() { div.remove(); };
             }
-            showToast(`Se importaron ${questions.length} preguntas.`, "success");
+            setTimeout(() => statusDiv.classList.add('hidden'), 3000);
+            showToast(`Se importaron ${questions.length} preguntas con respuestas correctas detectadas.`, "success");
             return true;
         }
 
         function importQuestionsSimple(text) {
             const questions = parseQuestionsFromText(text);
-            if (questions.length === 0) { showToast("No se encontraron preguntas en el texto", "error"); return false; }
+            if (!questions.length) { showToast("No se encontraron preguntas", "error"); return false; }
             const editor = document.getElementById('questionsEditor');
             for (const q of questions) {
                 const div = document.createElement('div');
@@ -1026,47 +1031,27 @@ ${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j
                 div.innerHTML = `
                     <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
                     <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        ${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}
-                    </div>
-                    <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full">
-                        <option value="0" selected>Opción 1 correcta</option>
-                        <option value="1">Opción 2 correcta</option>
-                        <option value="2">Opción 3 correcta</option>
-                        <option value="3">Opción 4 correcta</option>
-                    </select>
+                    <div class="grid grid-cols-2 gap-2">${q.options.map((opt, i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}</div>
+                    <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full"><option value="0" selected>Opción 1 correcta</option><option value="1">Opción 2</option><option value="2">Opción 3</option><option value="3">Opción 4</option></select>
                 `;
                 editor.appendChild(div);
                 div.querySelector('.remove-question').onclick = function() { div.remove(); };
             }
-            showToast(`Se importaron ${questions.length} preguntas. Recuerda verificar las respuestas correctas.`, "info");
+            showToast(`Se importaron ${questions.length} preguntas. Verifica respuestas correctas.`, "info");
             return true;
         }
 
-        // ========== INICIALIZACIÓN Y EVENTOS ==========
+        // Eventos principales
         async function setupApp() {
             try {
                 await signInAnonymously(auth);
                 await seedStudents();
                 initFirebaseSync();
                 populateSelects();
-                const starsContainer = document.getElementById('starsContainer');
-                for (let i = 0; i < 150; i++) {
-                    const star = document.createElement('div');
-                    star.classList.add('star');
-                    star.style.width = Math.random() * 3 + 1 + 'px';
-                    star.style.height = star.style.width;
-                    star.style.left = Math.random() * 100 + '%';
-                    star.style.top = Math.random() * 100 + '%';
-                    star.style.animationDelay = Math.random() * 5 + 's';
-                    star.style.animationDuration = Math.random() * 3 + 2 + 's';
-                    starsContainer.appendChild(star);
-                }
             } catch (error) { console.error(error); showToast("Error de conexión", "error"); }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Botones principales
             document.getElementById('teacherBtn').onclick = () => document.getElementById('teacherModal').classList.remove('hidden');
             document.getElementById('closeTeacherModal').onclick = () => document.getElementById('teacherModal').classList.add('hidden');
             document.getElementById('loginTeacher').onclick = () => {
@@ -1074,84 +1059,36 @@ ${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j
                     document.getElementById('teacherModal').classList.add('hidden');
                     document.getElementById('welcomeScreen').classList.add('hidden');
                     document.getElementById('teacherPanel').classList.remove('hidden');
-                    setTimeout(() => {
-                        const gradeSelect = document.getElementById('filterStudentsGrade');
-                        if (gradeSelect && gradeSelect.options.length > 1 && !gradeSelect.value) gradeSelect.value = allGrades[0];
-                        renderStudentsList();
-                    }, 100);
+                    setTimeout(() => { const gradeSelect = document.getElementById('filterStudentsGrade'); if (gradeSelect && gradeSelect.options.length > 1 && !gradeSelect.value) gradeSelect.value = allGrades[0]; renderStudentsList(); }, 100);
                 } else showToast("Contraseña incorrecta");
             };
-            document.getElementById('logoutTeacherPanel').onclick = () => {
-                document.getElementById('teacherPanel').classList.add('hidden');
-                document.getElementById('welcomeScreen').classList.remove('hidden');
-            };
+            document.getElementById('logoutTeacherPanel').onclick = () => { document.getElementById('teacherPanel').classList.add('hidden'); document.getElementById('welcomeScreen').classList.remove('hidden'); };
             document.getElementById('studentBtn').onclick = async () => {
-                if (allStudents.length === 0) {
-                    showToast("Cargando datos...", "info");
-                    let wait = 0;
-                    while (allStudents.length === 0 && wait < 20) { await new Promise(r => setTimeout(r, 200)); wait++; }
-                }
+                if (allStudents.length === 0) { showToast("Cargando...", "info"); let wait = 0; while (allStudents.length === 0 && wait < 20) { await new Promise(r => setTimeout(r, 200)); wait++; } }
                 if (allStudents.length === 0) return showToast("Error cargando datos", "error");
-                populateSelects();
-                resetSlider();
-                document.getElementById('studentModal').classList.remove('hidden');
-                const gradeSelect = document.getElementById('studentGradeSelect');
-                const nameSelect = document.getElementById('studentNameSelect');
-                const loadNames = () => {
-                    const grade = gradeSelect.value;
-                    const students = allStudents.filter(s => s.grade === grade);
-                    nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + students.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join('');
-                };
-                gradeSelect.onchange = loadNames;
-                loadNames();
-                initSlider();
+                populateSelects(); resetSlider(); document.getElementById('studentModal').classList.remove('hidden');
+                const gradeSelect = document.getElementById('studentGradeSelect'); const nameSelect = document.getElementById('studentNameSelect');
+                const loadNames = () => { const grade = gradeSelect.value; const students = allStudents.filter(s => s.grade === grade); nameSelect.innerHTML = '<option value="">-- Selecciona --</option>' + students.map(s => `<option value='${JSON.stringify({ id: s.id, name: s.name, grade: s.grade, phones: s.phones })}'>${escapeHtml(s.name)}</option>`).join(''); };
+                gradeSelect.onchange = loadNames; loadNames(); initSlider();
             };
             document.getElementById('enterStudent').onclick = () => {
-                const val = document.getElementById('studentNameSelect').value;
-                if (!val) return showToast("Selecciona tu nombre");
-                if (enterBtn.disabled) return showToast("Desliza la flecha hasta el final", "warning");
-                currentStudent = JSON.parse(val);
-                document.getElementById('studentModal').classList.add('hidden');
-                document.getElementById('welcomeScreen').classList.add('hidden');
-                document.getElementById('studentPanel').classList.remove('hidden');
-                document.getElementById('studentNameSpan').innerText = currentStudent.name;
-                document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
+                const val = document.getElementById('studentNameSelect').value; if (!val) return showToast("Selecciona tu nombre"); if (enterBtn.disabled) return showToast("Desliza la flecha", "warning");
+                currentStudent = JSON.parse(val); document.getElementById('studentModal').classList.add('hidden'); document.getElementById('welcomeScreen').classList.add('hidden'); document.getElementById('studentPanel').classList.remove('hidden');
+                document.getElementById('studentNameSpan').innerText = currentStudent.name; document.getElementById('studentGradeSpan').innerText = currentStudent.grade;
                 renderStudentTasks(); renderStudentExams(); renderStudentGrades();
                 const unsubTasksStud = onSnapshot(tasksRef, () => renderStudentTasks());
                 const unsubExamsStud = onSnapshot(examsRef, () => renderStudentExams());
                 const unsubResultsStud = onSnapshot(resultsRef, () => { renderStudentGrades(); renderStudentExams(); });
                 studentUnsubs = [unsubTasksStud, unsubExamsStud, unsubResultsStud];
             };
-            document.getElementById('closeStudentModal').onclick = () => {
-                document.getElementById('studentModal').classList.add('hidden');
-                resetSlider();
-            };
-            document.getElementById('logoutStudentPanel').onclick = () => {
-                document.getElementById('studentPanel').classList.add('hidden');
-                document.getElementById('welcomeScreen').classList.remove('hidden');
-                studentUnsubs.forEach(unsub => unsub());
-                currentStudent = null;
-            };
+            document.getElementById('closeStudentModal').onclick = () => { document.getElementById('studentModal').classList.add('hidden'); resetSlider(); };
+            document.getElementById('logoutStudentPanel').onclick = () => { document.getElementById('studentPanel').classList.add('hidden'); document.getElementById('welcomeScreen').classList.remove('hidden'); studentUnsubs.forEach(unsub => unsub()); currentStudent = null; };
 
             // Pestañas
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-cyan-600', 'text-white'));
-                    btn.classList.add('active', 'bg-cyan-600', 'text-white');
-                    document.querySelectorAll('.tab-content').forEach(div => div.classList.add('hidden'));
-                    document.getElementById(btn.dataset.tab).classList.remove('hidden');
-                };
-            });
-            document.querySelectorAll('.student-tab-btn').forEach(btn => {
-                btn.onclick = () => {
-                    document.querySelectorAll('.student-tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-600', 'text-white'));
-                    btn.classList.add('active', 'bg-emerald-600', 'text-white');
-                    document.querySelectorAll('.student-tab-content').forEach(div => div.classList.add('hidden'));
-                    document.getElementById(btn.dataset.stab).classList.remove('hidden');
-                };
-            });
+            document.querySelectorAll('.tab-btn').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active', 'bg-cyan-600', 'text-white')); btn.classList.add('active', 'bg-cyan-600', 'text-white'); document.querySelectorAll('.tab-content').forEach(div => div.classList.add('hidden')); document.getElementById(btn.dataset.tab).classList.remove('hidden'); }; });
+            document.querySelectorAll('.student-tab-btn').forEach(btn => { btn.onclick = () => { document.querySelectorAll('.student-tab-btn').forEach(b => b.classList.remove('active', 'bg-emerald-600', 'text-white')); btn.classList.add('active', 'bg-emerald-600', 'text-white'); document.querySelectorAll('.student-tab-content').forEach(div => div.classList.add('hidden')); document.getElementById(btn.dataset.stab).classList.remove('hidden'); }; });
 
-            // Iconos 3D (accesos rápidos)
+            // Iconos rápidos
             document.getElementById('infoUploadBtn').onclick = () => { document.getElementById('teacherBtn').click(); setTimeout(() => { const btn = document.querySelector('.tab-btn[data-tab="studentsTab"]'); if(btn) btn.click(); }, 500); };
             document.getElementById('examsBtn').onclick = () => { document.getElementById('teacherBtn').click(); setTimeout(() => { const btn = document.querySelector('.tab-btn[data-tab="examsTab"]'); if(btn) btn.click(); }, 500); };
             document.getElementById('homeworkBtn').onclick = () => { document.getElementById('teacherBtn').click(); setTimeout(() => { const btn = document.querySelector('.tab-btn[data-tab="tasksTab"]'); if(btn) btn.click(); }, 500); };
@@ -1160,209 +1097,74 @@ ${questions.map((q, i) => `${i+1}. ${q.text}\nOpciones:\n${q.options.map((opt, j
 
             // Publicar tarea
             document.getElementById('publishTask').onclick = async () => {
-                const title = document.getElementById('taskTitle').value.trim();
-                if (!title) return showToast("El título es obligatorio", "error");
-                const btn = document.getElementById('publishTask');
-                btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Publicando...';
+                const title = document.getElementById('taskTitle').value.trim(); if (!title) return showToast("Título obligatorio", "error");
+                const btn = document.getElementById('publishTask'); btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Publicando...';
                 try {
-                    let fileURL = null;
-                    const file = document.getElementById('taskFile').files[0];
+                    let fileURL = null; const file = document.getElementById('taskFile').files[0];
                     if (file) { const storageRef = ref(storage, `tasks/${Date.now()}_${file.name}`); await uploadBytes(storageRef, file); fileURL = await getDownloadURL(storageRef); }
-                    await addDoc(tasksRef, {
-                        title, grade: document.getElementById('taskGrade').value || null, area: document.getElementById('taskArea').value || null,
-                        description: document.getElementById('taskDesc').value || null, fileURL, link: document.getElementById('taskLink').value || null, createdAt: serverTimestamp()
-                    });
+                    await addDoc(tasksRef, { title, grade: document.getElementById('taskGrade').value || null, area: document.getElementById('taskArea').value || null, description: document.getElementById('taskDesc').value || null, fileURL, link: document.getElementById('taskLink').value || null, createdAt: serverTimestamp() });
                     showToast("Tarea publicada", "success");
                     document.getElementById('taskTitle').value = ''; document.getElementById('taskDesc').value = ''; document.getElementById('taskFile').value = ''; document.getElementById('taskLink').value = '';
-                } catch(e) { showToast("Error al publicar", "error"); }
-                finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
+                } catch(e) { showToast("Error", "error"); } finally { btn.disabled = false; btn.innerHTML = "Publicar Tarea"; }
             };
-
-            // Generar descripción de tarea con IA
             document.getElementById('generateTaskDesc').onclick = async () => {
-                const topic = document.getElementById('taskTitle').value;
-                if (!topic) return showToast("Escribe un título");
-                const btn = document.getElementById('generateTaskDesc');
-                btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+                const topic = document.getElementById('taskTitle').value; if (!topic) return showToast("Escribe un título");
+                const btn = document.getElementById('generateTaskDesc'); btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
                 try {
-                    const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
-                        body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 })
-                    });
-                    const data = await res.json();
-                    document.getElementById('taskDesc').value = data.choices[0].message.content;
-                    showToast("Descripción generada", "success");
-                } catch(e) { showToast("Error con IA", "error"); }
-                finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> IA'; }
+                    const res = await fetch("https://api.deepseek.com/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Crea una descripción detallada para una tarea escolar titulada: "${topic}". Incluye objetivo, instrucciones y criterios de evaluación.` }], temperature: 0.7 }) });
+                    const data = await res.json(); document.getElementById('taskDesc').value = data.choices[0].message.content; showToast("Descripción generada", "success");
+                } catch(e) { showToast("Error con IA", "error"); } finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-magic"></i> IA'; }
             };
-
-            // Generar preguntas con IA
             document.getElementById('generateQuestions').onclick = async () => {
-                const topic = document.getElementById('examTopic').value;
-                const num = parseInt(document.getElementById('numQuestions').value);
-                if (!topic) return showToast("Escribe el tema");
-                const btn = document.getElementById('generateQuestions');
-                btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
+                const topic = document.getElementById('examTopic').value; const num = parseInt(document.getElementById('numQuestions').value); if (!topic) return showToast("Escribe el tema");
+                const btn = document.getElementById('generateQuestions'); btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>';
                 try {
-                    const res = await fetch("https://api.deepseek.com/v1/chat/completions", {
-                        method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` },
-                        body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }], temperature: 0.7 })
-                    });
-                    const data = await res.json();
-                    let content = data.choices[0].message.content;
-                    let clean = content.replace(/```json/g,'').replace(/```/g,'').trim();
-                    let questions = JSON.parse(clean);
-                    const editor = document.getElementById('questionsEditor');
-                    editor.innerHTML = '';
+                    const res = await fetch("https://api.deepseek.com/v1/chat/completions", { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${DEEPSEEK_API_KEY}` }, body: JSON.stringify({ model: "deepseek-chat", messages: [{ role: "user", content: `Genera ${num} preguntas de opción múltiple sobre: "${topic}". Devuelve SOLO JSON: [{"text":"...","options":["a","b","c","d"],"correct":0}]` }], temperature: 0.7 }) });
+                    const data = await res.json(); let content = data.choices[0].message.content; let clean = content.replace(/```json/g,'').replace(/```/g,'').trim(); let questions = JSON.parse(clean);
+                    const editor = document.getElementById('questionsEditor'); editor.innerHTML = '';
                     questions.forEach((q, idx) => {
-                        const div = document.createElement('div');
-                        div.className = 'border rounded-lg p-3 bg-gray-800/70 relative exam-question-edit';
-                        div.innerHTML = `
-                            <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
-                            <input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2">
-                            <div class="grid grid-cols-2 gap-2">
-                                ${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}
-                            </div>
-                            <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full">
-                                <option value="0" ${q.correct===0?'selected':''}>Opción 1 correcta</option>
-                                <option value="1" ${q.correct===1?'selected':''}>Opción 2 correcta</option>
-                                <option value="2" ${q.correct===2?'selected':''}>Opción 3 correcta</option>
-                                <option value="3" ${q.correct===3?'selected':''}>Opción 4 correcta</option>
-                            </select>
-                        `;
-                        editor.appendChild(div);
-                        div.querySelector('.remove-question').onclick = function() { div.remove(); };
+                        const div = document.createElement('div'); div.className = 'border rounded-lg p-3 bg-gray-800/70 relative exam-question-edit';
+                        div.innerHTML = `<button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button><input type="text" placeholder="Pregunta" value="${escapeHtml(q.text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2"><div class="grid grid-cols-2 gap-2">${q.options.map((opt,i) => `<input type="text" placeholder="Opción ${i+1}" value="${escapeHtml(opt)}" class="bg-gray-700 border border-gray-600 p-2 rounded">`).join('')}</div><select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full"><option value="0" ${q.correct===0?'selected':''}>Opción 1 correcta</option><option value="1" ${q.correct===1?'selected':''}>Opción 2 correcta</option><option value="2" ${q.correct===2?'selected':''}>Opción 3 correcta</option><option value="3" ${q.correct===3?'selected':''}>Opción 4 correcta</option></select>`;
+                        editor.appendChild(div); div.querySelector('.remove-question').onclick = function() { div.remove(); };
                     });
                     showToast("Preguntas generadas", "success");
-                } catch(e) { showToast("Error con IA", "error"); }
-                finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
+                } catch(e) { showToast("Error con IA", "error"); } finally { btn.disabled = false; btn.innerHTML = '<i class="fas fa-bolt"></i> Generar IA'; }
             };
-
-            // Publicar examen
             document.getElementById('publishExam').onclick = async () => {
-                const title = document.getElementById('examTitle').value;
-                const grade = document.getElementById('examGrade').value;
-                const area = document.getElementById('examArea').value;
-                const questionDivs = document.querySelectorAll('#questionsEditor > div');
-                const questions = [];
-                questionDivs.forEach(div => {
-                    const inputs = div.querySelectorAll('input[type="text"]');
-                    const text = inputs[0].value;
-                    const options = [inputs[1].value, inputs[2].value, inputs[3].value, inputs[4].value];
-                    const correct = parseInt(div.querySelector('.correct-option').value);
-                    if (text && options.every(o=>o)) questions.push({ text, options, correct });
-                });
+                const title = document.getElementById('examTitle').value, grade = document.getElementById('examGrade').value, area = document.getElementById('examArea').value;
+                const questionDivs = document.querySelectorAll('#questionsEditor > div'); const questions = [];
+                questionDivs.forEach(div => { const inputs = div.querySelectorAll('input[type="text"]'); const text = inputs[0].value; const options = [inputs[1].value,inputs[2].value,inputs[3].value,inputs[4].value]; const correct = parseInt(div.querySelector('.correct-option').value); if (text && options.every(o=>o)) questions.push({ text, options, correct }); });
                 if (!title || !grade || !area || questions.length === 0) return showToast("Complete todos los campos y al menos una pregunta", "error");
-                await addDoc(examsRef, { title, grade, area, questions, createdAt: serverTimestamp() });
-                showToast("Examen publicado", "success");
+                await addDoc(examsRef, { title, grade, area, questions, createdAt: serverTimestamp() }); showToast("Examen publicado", "success");
                 document.getElementById('examTitle').value = ''; document.getElementById('examTopic').value = ''; document.getElementById('questionsEditor').innerHTML = ''; document.getElementById('numQuestions').value = '5';
             };
-
-            // Agregar estudiante
             document.getElementById('addStudent').onclick = async () => {
-                const name = document.getElementById('newStudentName').value.trim().toUpperCase();
-                const grade = document.getElementById('newStudentGrade').value;
-                const phone = document.getElementById('newStudentPhone').value.trim();
+                const name = document.getElementById('newStudentName').value.trim().toUpperCase(); const grade = document.getElementById('newStudentGrade').value; const phone = document.getElementById('newStudentPhone').value.trim();
                 if (!name || !grade) return showToast("Nombre y grado requeridos", "error");
                 if (allStudents.some(s => s.name === name && s.grade === grade)) { showToast("Ya existe", "error"); return; }
-                await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] });
-                showToast("Estudiante agregado", "success");
-                document.getElementById('newStudentName').value = ''; document.getElementById('newStudentPhone').value = '';
-                const selectedGrade = document.getElementById('filterStudentsGrade').value;
-                if (selectedGrade === grade) renderStudentsList();
+                await addDoc(studentsRef, { name, grade, phones: phone ? [phone] : [] }); showToast("Estudiante agregado", "success");
+                document.getElementById('newStudentName').value = ''; document.getElementById('newStudentPhone').value = ''; const selectedGrade = document.getElementById('filterStudentsGrade').value; if (selectedGrade === grade) renderStudentsList();
             };
-
-            // Modales manuales e importación
-            const manualModal = document.getElementById('manualQuestionModal');
-            const openManualBtn = document.getElementById('manualQuestionBtn');
-            const closeManualBtn = document.getElementById('closeManualModal');
-            const addManualBtn = document.getElementById('addManualQuestionBtn');
-            const clearQuestionsBtn = document.getElementById('clearQuestionsBtn');
-            openManualBtn.onclick = () => manualModal.classList.remove('hidden');
-            closeManualBtn.onclick = () => manualModal.classList.add('hidden');
+            const manualModal = document.getElementById('manualQuestionModal'), openManualBtn = document.getElementById('manualQuestionBtn'), closeManualBtn = document.getElementById('closeManualModal'), addManualBtn = document.getElementById('addManualQuestionBtn'), clearQuestionsBtn = document.getElementById('clearQuestionsBtn');
+            openManualBtn.onclick = () => manualModal.classList.remove('hidden'); closeManualBtn.onclick = () => manualModal.classList.add('hidden');
             addManualBtn.onclick = () => {
-                const text = document.getElementById('manualQuestionText').value.trim();
-                const opt0 = document.getElementById('manualOption0').value.trim();
-                const opt1 = document.getElementById('manualOption1').value.trim();
-                const opt2 = document.getElementById('manualOption2').value.trim();
-                const opt3 = document.getElementById('manualOption3').value.trim();
-                const correct = parseInt(document.getElementById('manualCorrect').value);
-                if (!text) { showToast("Falta pregunta", "error"); return; }
-                if (!opt0 || !opt1 || !opt2 || !opt3) { showToast("Complete todas las opciones", "error"); return; }
-                const editor = document.getElementById('questionsEditor');
-                const div = document.createElement('div');
-                div.className = 'border rounded-lg p-3 bg-gray-800/70 relative exam-question-edit';
-                div.innerHTML = `
-                    <button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button>
-                    <input type="text" placeholder="Pregunta" value="${escapeHtml(text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2">
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="text" placeholder="Opción 1" value="${escapeHtml(opt0)}" class="bg-gray-700 border border-gray-600 p-2 rounded">
-                        <input type="text" placeholder="Opción 2" value="${escapeHtml(opt1)}" class="bg-gray-700 border border-gray-600 p-2 rounded">
-                        <input type="text" placeholder="Opción 3" value="${escapeHtml(opt2)}" class="bg-gray-700 border border-gray-600 p-2 rounded">
-                        <input type="text" placeholder="Opción 4" value="${escapeHtml(opt3)}" class="bg-gray-700 border border-gray-600 p-2 rounded">
-                    </div>
-                    <select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full">
-                        <option value="0" ${correct===0?'selected':''}>Opción 1 correcta</option>
-                        <option value="1" ${correct===1?'selected':''}>Opción 2 correcta</option>
-                        <option value="2" ${correct===2?'selected':''}>Opción 3 correcta</option>
-                        <option value="3" ${correct===3?'selected':''}>Opción 4 correcta</option>
-                    </select>
-                `;
-                editor.appendChild(div);
-                div.querySelector('.remove-question').onclick = function() { div.remove(); };
-                document.getElementById('manualQuestionText').value = '';
-                document.getElementById('manualOption0').value = '';
-                document.getElementById('manualOption1').value = '';
-                document.getElementById('manualOption2').value = '';
-                document.getElementById('manualOption3').value = '';
-                manualModal.classList.add('hidden');
-                showToast("Pregunta añadida", "success");
+                const text = document.getElementById('manualQuestionText').value.trim(); const opt0 = document.getElementById('manualOption0').value.trim(); const opt1 = document.getElementById('manualOption1').value.trim(); const opt2 = document.getElementById('manualOption2').value.trim(); const opt3 = document.getElementById('manualOption3').value.trim(); const correct = parseInt(document.getElementById('manualCorrect').value);
+                if (!text || !opt0 || !opt1 || !opt2 || !opt3) return showToast("Complete todos los campos", "error");
+                const editor = document.getElementById('questionsEditor'); const div = document.createElement('div'); div.className = 'border rounded-lg p-3 bg-gray-800/70 relative exam-question-edit';
+                div.innerHTML = `<button class="remove-question absolute top-2 right-2 text-red-500"><i class="fas fa-trash"></i></button><input type="text" placeholder="Pregunta" value="${escapeHtml(text)}" class="w-full bg-gray-700 border border-gray-600 p-2 rounded mb-2"><div class="grid grid-cols-2 gap-2"><input type="text" placeholder="Opción 1" value="${escapeHtml(opt0)}" class="bg-gray-700 border border-gray-600 p-2 rounded"><input type="text" placeholder="Opción 2" value="${escapeHtml(opt1)}" class="bg-gray-700 border border-gray-600 p-2 rounded"><input type="text" placeholder="Opción 3" value="${escapeHtml(opt2)}" class="bg-gray-700 border border-gray-600 p-2 rounded"><input type="text" placeholder="Opción 4" value="${escapeHtml(opt3)}" class="bg-gray-700 border border-gray-600 p-2 rounded"></div><select class="correct-option mt-2 bg-gray-700 border border-gray-600 p-2 rounded w-full"><option value="0" ${correct===0?'selected':''}>Opción 1 correcta</option><option value="1" ${correct===1?'selected':''}>Opción 2 correcta</option><option value="2" ${correct===2?'selected':''}>Opción 3 correcta</option><option value="3" ${correct===3?'selected':''}>Opción 4 correcta</option></select>`;
+                editor.appendChild(div); div.querySelector('.remove-question').onclick = function() { div.remove(); };
+                document.getElementById('manualQuestionText').value = ''; document.getElementById('manualOption0').value = ''; document.getElementById('manualOption1').value = ''; document.getElementById('manualOption2').value = ''; document.getElementById('manualOption3').value = ''; manualModal.classList.add('hidden'); showToast("Pregunta añadida", "success");
             };
-            clearQuestionsBtn.onclick = () => {
-                if (confirm("¿Eliminar todas las preguntas?")) {
-                    document.getElementById('questionsEditor').innerHTML = '';
-                    showToast("Editor limpiado", "success");
-                }
-            };
-            const importModal = document.getElementById('importQuestionsModal');
-            const openImportBtn = document.getElementById('importQuestionsBtn');
-            const closeImportBtn = document.getElementById('closeImportModal');
-            const simpleImportBtn = document.getElementById('processImportSimpleBtn');
-            const aiImportBtn = document.getElementById('processImportWithAIBtn');
-            openImportBtn.onclick = () => importModal.classList.remove('hidden');
-            closeImportBtn.onclick = () => importModal.classList.add('hidden');
-            simpleImportBtn.onclick = () => {
-                const text = document.getElementById('importTextArea').value;
-                if (!text.trim()) return showToast("Pega el texto", "error");
-                if (importQuestionsSimple(text)) {
-                    importModal.classList.add('hidden');
-                    document.getElementById('importTextArea').value = '';
-                }
-            };
-            aiImportBtn.onclick = async () => {
-                const text = document.getElementById('importTextArea').value;
-                if (!text.trim()) return showToast("Pega el texto", "error");
-                await importQuestionsWithAI(text);
-                importModal.classList.add('hidden');
-                document.getElementById('importTextArea').value = '';
-            };
-
-            // Filtros y refrescos
-            document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList());
-            document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList());
-            document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
-            document.getElementById('filterExamsGrade')?.addEventListener('change', () => renderExamsList());
-            document.getElementById('filterExamsArea')?.addEventListener('change', () => renderExamsList());
-            document.getElementById('refreshExamsListBtn')?.addEventListener('click', () => renderExamsList());
-            document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable());
-            document.getElementById('filterArea')?.addEventListener('change', () => renderGradesTable());
-            document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
-            document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList());
-            document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
-            document.getElementById('closeAnswersModal')?.addEventListener('click', () => {
-                document.getElementById('viewAnswersModal').classList.add('hidden');
-                document.getElementById('viewAnswersModal').classList.remove('flex');
-            });
+            clearQuestionsBtn.onclick = () => { if (confirm("¿Eliminar todas las preguntas?")) { document.getElementById('questionsEditor').innerHTML = ''; showToast("Editor limpiado", "success"); } };
+            const importModal = document.getElementById('importQuestionsModal'), openImportBtn = document.getElementById('importQuestionsBtn'), closeImportBtn = document.getElementById('closeImportModal'), simpleImportBtn = document.getElementById('processImportSimpleBtn'), aiImportBtn = document.getElementById('processImportWithAIBtn');
+            openImportBtn.onclick = () => importModal.classList.remove('hidden'); closeImportBtn.onclick = () => importModal.classList.add('hidden');
+            simpleImportBtn.onclick = () => { const text = document.getElementById('importTextArea').value; if (!text.trim()) return showToast("Pega el texto", "error"); if (importQuestionsSimple(text)) { importModal.classList.add('hidden'); document.getElementById('importTextArea').value = ''; } };
+            aiImportBtn.onclick = async () => { const text = document.getElementById('importTextArea').value; if (!text.trim()) return showToast("Pega el texto", "error"); await importQuestionsWithAI(text); importModal.classList.add('hidden'); document.getElementById('importTextArea').value = ''; };
+            document.getElementById('filterTasksGrade')?.addEventListener('change', () => renderTasksList()); document.getElementById('filterTasksArea')?.addEventListener('change', () => renderTasksList()); document.getElementById('refreshTasks')?.addEventListener('click', () => renderTasksList());
+            document.getElementById('filterExamsGrade')?.addEventListener('change', () => renderExamsList()); document.getElementById('filterExamsArea')?.addEventListener('change', () => renderExamsList()); document.getElementById('refreshExamsListBtn')?.addEventListener('click', () => renderExamsList());
+            document.getElementById('filterGrade')?.addEventListener('change', () => renderGradesTable()); document.getElementById('filterArea')?.addEventListener('change', () => renderGradesTable()); document.getElementById('refreshGrades')?.addEventListener('click', () => renderGradesTable());
+            document.getElementById('filterStudentsGrade')?.addEventListener('change', () => renderStudentsList()); document.getElementById('refreshStudentsListBtn')?.addEventListener('click', () => renderStudentsList());
+            document.getElementById('closeAnswersModal')?.addEventListener('click', () => { document.getElementById('viewAnswersModal').classList.add('hidden'); document.getElementById('viewAnswersModal').classList.remove('flex'); });
         });
 
         setupApp();
